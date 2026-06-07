@@ -3,11 +3,12 @@
 // Bridge between website requests and Studio code insertion
 // ============================================================
 
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '../db/client.js';
 import { logger } from '../utils/logger.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const MODEL = 'gemini-1.5-flash';
 
 // ─────────────────────────────────────────────
 // SYSTEM PROMPT — tuned for code generation
