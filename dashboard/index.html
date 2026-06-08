@@ -485,7 +485,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
   <!-- NAV -->
   <nav class="nav">
     <a class="nav-logo" href="#">
-      <div class="nav-logo-icon" style="background:none;padding:0;overflow:hidden;"><img src="lychee-ai-logo.png" style="width:36px;height:36px;border-radius:10px;object-fit:cover;"/></div>
+      <div class="nav-logo-icon" style="background:none;padding:0;overflow:hidden;"><img src="/lychee-ai-logo.png" style="width:36px;height:36px;border-radius:10px;object-fit:cover;"/></div>
       <span class="nav-logo-text">Lychee AI</span>
     </a>
     <div class="nav-links">
@@ -694,7 +694,7 @@ tool.Parent = game:GetService(<span class="str">"StarterPack"</span>)</div>
 
   <!-- FOOTER -->
   <footer class="footer">
-    <div class="footer-logo"><img src="lychee-ai-logo.png" style="width:24px;height:24px;border-radius:6px;object-fit:cover;margin-right:4px;"/> Lychee AI</div>
+    <div class="footer-logo"><img src="/lychee-ai-logo.png" style="width:24px;height:24px;border-radius:6px;object-fit:cover;margin-right:4px;"/> Lychee AI</div>
     <div class="footer-links">
       <a class="footer-link" href="#">Privacy</a>
       <a class="footer-link" href="#">Terms</a>
@@ -710,7 +710,7 @@ tool.Parent = game:GetService(<span class="str">"StarterPack"</span>)</div>
 <div id="authOverlay" class="auth-overlay hidden">
   <div class="auth-modal">
     <div class="auth-modal-logo">
-      <div class="auth-modal-icon" style="background:none;padding:0;overflow:hidden;"><img src="lychee-ai-logo.png" style="width:52px;height:52px;border-radius:14px;object-fit:cover;"/></div>
+      <div class="auth-modal-icon" style="background:none;padding:0;overflow:hidden;"><img src="/lychee-ai-logo.png" style="width:52px;height:52px;border-radius:14px;object-fit:cover;"/></div>
       <div class="auth-modal-title">Lychee AI</div>
       <div class="auth-modal-sub">Gemini-powered Roblox coding assistant</div>
     </div>
@@ -745,7 +745,7 @@ tool.Parent = game:GetService(<span class="str">"StarterPack"</span>)</div>
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="sidebar-logo-icon" style="background:none;padding:0;overflow:hidden;"><img src="lychee-ai-logo.png" style="width:30px;height:30px;border-radius:8px;object-fit:cover;"/></div>
+        <div class="sidebar-logo-icon" style="background:none;padding:0;overflow:hidden;"><img src="/lychee-ai-logo.png" style="width:30px;height:30px;border-radius:8px;object-fit:cover;"/></div>
         <div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="sidebar-logo-text">Lychee AI</span>
@@ -1143,23 +1143,16 @@ if (state.accessToken) {
 }
 
 // ── SCROLL ANIMATIONS ──
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-    }
-  });
-}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
 function initScrollAnimations() {
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
-    observer.observe(el);
-  });
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => obs.observe(el));
 }
-
-// Run on page load and after any navigation
 document.addEventListener('DOMContentLoaded', initScrollAnimations);
-setTimeout(initScrollAnimations, 100);
+setTimeout(initScrollAnimations, 200);
 
 </script>
 </body>
