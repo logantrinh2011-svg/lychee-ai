@@ -982,46 +982,69 @@ function toggleFaq(el) {
 async function renderBuild() {
   const c = document.getElementById('mainContent');
   c.innerHTML = `
-    <!-- Floating game screenshots background -->
     <div class="build-bg" id="buildBg"></div>
-
     <div class="build-page" style="position:relative;z-index:1;">
-      <h1 class="build-title">Describe a <em id="typewriterText"></em><span class="tw-cursor"></span></h1>
-      <p class="build-subtitle">Lychee AI generates the code and drops it straight into Studio</p>
+      <h1 class="build-title" style="opacity:0;transform:translateY(20px);transition:all 0.6s ease;">Describe a <em>game mechanic...</em></h1>
+      <p class="build-subtitle" style="opacity:0;transform:translateY(16px);transition:all 0.6s ease 0.15s;">Lychee AI generates the code and drops it straight into Studio</p>
 
-      <div class="build-input-wrap" style="width:100%;max-width:680px;">
-        <textarea class="build-textarea" id="buildPrompt" placeholder="Make a sword with damage, a shop GUI with currency, a round system..." rows="3"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitBuild()}"></textarea>
-        <div class="build-input-footer">
+      <div class="build-input-wrap" id="buildWrap" style="width:100%;max-width:680px;opacity:0;transform:translateY(20px);transition:all 0.6s ease 0.25s;">
+        <textarea class="build-textarea" id="buildPrompt" id="buildPrompt" rows="3"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitBuild()}"
+          oninput="onBuildInput(this)"
+          onfocus="onBuildFocus()" onblur="onBuildBlur()"></textarea>
+        <div class="build-input-footer" style="display:flex;align-items:center;justify-content:space-between;">
+          <span id="charCount" style="font-size:11px;color:var(--text-3);">0 / 4000</span>
           <button class="build-send-btn" id="buildSendBtn" onclick="submitBuild()">➤</button>
         </div>
       </div>
 
-      <div class="build-chips">
+      <div class="build-chips" style="opacity:0;transform:translateY(10px);transition:all 0.5s ease 0.4s;" id="buildChips">
         <div class="build-chip" onclick="setPrompt('Make a combat system with sword, damage and kill counter')"><span class="build-chip-icon">⚔️</span> Combat system</div>
         <div class="build-chip" onclick="setPrompt('Make a shop GUI with currency display and buy buttons')"><span class="build-chip-icon">🛍️</span> Shop GUI</div>
         <div class="build-chip" onclick="setPrompt('Make a round system with lobby, countdown and winner screen')"><span class="build-chip-icon">🎮</span> Round system</div>
         <div class="build-chip" onclick="setPrompt('Make a leaderboard that saves stats with DataStore')"><span class="build-chip-icon">🏆</span> Leaderboard</div>
+        <div class="build-chip" onclick="setPrompt('Make a pet system where players can collect and equip pets')"><span class="build-chip-icon">🐾</span> Pet system</div>
+        <div class="build-chip" onclick="setPrompt('Make a gun with shooting mechanic, reload and bullet spread')"><span class="build-chip-icon">🔫</span> Gun system</div>
       </div>
 
-      <div id="buildStatus" style="margin-top:20px;font-size:13px;color:var(--text-3);text-align:center;"></div>
+      <div id="buildStatus" style="margin-top:16px;font-size:13px;color:var(--text-3);text-align:center;min-height:20px;transition:all 0.3s;"></div>
 
-      <div style="width:100%;max-width:680px;margin-top:40px;">
+      <div style="width:100%;max-width:680px;margin-top:36px;opacity:0;transition:opacity 0.5s ease 0.6s;" id="jobsSection">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <span style="font-size:13px;font-weight:600;color:var(--text-2);">Recent builds</span>
-          <button class="btn btn-ghost btn-sm" onclick="loadJobs()">Refresh</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadJobs()">↻ Refresh</button>
         </div>
         <div id="jobsList"><div style="color:var(--text-3);font-size:13px;text-align:center;padding:20px;">Loading...</div></div>
       </div>
     </div>
 
-    <div class="studio-pill">
+    <div class="studio-pill" style="opacity:0;animation:fade-pill 0.5s ease 1s forwards;">
       <div class="studio-pill-dot"></div>
       Make sure Roblox Studio is open with the Lychee AI plugin running
-    </div>`;
+    </div>
+    <style>
+      @keyframes fade-pill { to { opacity: 1; } }
+      .build-input-wrap:focus-within #buildWrap { border-color: rgba(232,84,122,0.5); }
+    </style>`;
+
+  // Staggered entrance animations
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      const title = c.querySelector('.build-title');
+      const sub = c.querySelector('.build-subtitle');
+      const wrap = document.getElementById('buildWrap');
+      const chips = document.getElementById('buildChips');
+      const jobs = document.getElementById('jobsSection');
+      if (title) { title.style.opacity='1'; title.style.transform='translateY(0)'; }
+      if (sub)   { sub.style.opacity='1';   sub.style.transform='translateY(0)'; }
+      if (wrap)  { wrap.style.opacity='1';  wrap.style.transform='translateY(0)'; }
+      if (chips) { chips.style.opacity='1'; chips.style.transform='translateY(0)'; }
+      if (jobs)  { jobs.style.opacity='1'; }
+    }, 50);
+  });
 
   loadJobs();
-  startTypewriter();
+  startPlaceholderCycle();
   spawnGameCards();
 }
 
@@ -1226,60 +1249,95 @@ function hideLoadingScreen() {
   if (el) { el.classList.add('gone'); setTimeout(() => el.remove(), 600); }
 }
 
-// ── TYPEWRITER ──
-const twPhrases = [
-  'game mechanic...',
-  'combat system...',
-  'shop GUI...',
-  'round system...',
-  'leaderboard...',
-  'sword tool...',
-  'DataStore...',
-  'NPC with AI...',
-  'movement system...',
-  'farming system...',
+// ── PLACEHOLDER CYCLING (inside textbox) ──
+const placeholderIdeas = [
+  'Make a sword with damage, swing animation and kill counter...',
+  'Make a shop GUI with currency display and buy buttons...',
+  'Make a round system with lobby, countdown and winner screen...',
+  'Make a leaderboard that saves player stats with DataStore...',
+  'Make a pet system where players can collect and equip pets...',
+  'Make a gun with shooting mechanic, reload and bullet spread...',
+  'Make an obby with moving parts, checkpoints and timer...',
+  'Make a tycoon where players collect money and buy upgrades...',
+  'Make a zombie survival game with waves and weapons...',
+  'Make a parkour system with wall running and double jump...',
+  'Make an admin panel with commands like kick, ban and teleport...',
+  'Make a day/night cycle with lighting changes and effects...',
 ];
-let twIndex = 0, twChar = 0, twDeleting = false, twTimer = null;
-function startTypewriter() {
-  const el = document.getElementById('typewriterText');
+let phIndex = 0, phChar = 0, phDeleting = false, phTimer = null, phPaused = false;
+
+function startPlaceholderCycle() {
+  const el = document.getElementById('buildPrompt');
   if (!el) return;
-  clearTimeout(twTimer);
-  twIndex = 0; twChar = 0; twDeleting = false;
+  clearTimeout(phTimer);
+  phIndex = 0; phChar = 0; phDeleting = false; phPaused = false;
+
   function tick() {
-    const el = document.getElementById('typewriterText');
-    if (!el) return;
-    const phrase = twPhrases[twIndex % twPhrases.length];
-    if (!twDeleting) {
-      twChar++;
-      el.textContent = phrase.slice(0, twChar);
-      if (twChar === phrase.length) { twDeleting = true; twTimer = setTimeout(tick, 1800); return; }
-      twTimer = setTimeout(tick, 60);
+    const el = document.getElementById('buildPrompt');
+    if (!el || phPaused) return;
+    const phrase = placeholderIdeas[phIndex % placeholderIdeas.length];
+    if (!phDeleting) {
+      phChar++;
+      el.setAttribute('placeholder', phrase.slice(0, phChar));
+      if (phChar === phrase.length) {
+        phDeleting = true;
+        phTimer = setTimeout(tick, 2200);
+        return;
+      }
+      phTimer = setTimeout(tick, 45);
     } else {
-      twChar--;
-      el.textContent = phrase.slice(0, twChar);
-      if (twChar === 0) { twDeleting = false; twIndex++; twTimer = setTimeout(tick, 300); return; }
-      twTimer = setTimeout(tick, 35);
+      phChar--;
+      el.setAttribute('placeholder', phrase.slice(0, phChar));
+      if (phChar === 0) {
+        phDeleting = false;
+        phIndex++;
+        phTimer = setTimeout(tick, 400);
+        return;
+      }
+      phTimer = setTimeout(tick, 25);
     }
   }
   tick();
 }
 
-// ── FLOATING GAME CARDS ──
-const gameImages = [
-  { url: 'https://tr.rbxcdn.com/0e4a16b7b1b4c5d5e6f7a8b9c0d1e2f3/512/512/GameIcon/Webp', label: 'Blox Fruits' },
-  { url: 'https://tr.rbxcdn.com/180DAY-29a7c2c4b3d4e5f6a7b8c9d0e1f2a3b4/512/512/GameIcon/Webp', label: 'Adopt Me' },
-  { url: 'https://tr.rbxcdn.com/180DAY-deadbeef1234567890abcdef12345678/512/512/GameIcon/Webp', label: 'Pet Simulator' },
-];
+function onBuildFocus() {
+  phPaused = true;
+  clearTimeout(phTimer);
+  const wrap = document.getElementById('buildWrap');
+  if (wrap) {
+    wrap.style.borderColor = 'rgba(232,84,122,0.5)';
+    wrap.style.boxShadow = '0 0 0 3px rgba(232,84,122,0.12), 0 12px 50px rgba(232,84,122,0.08)';
+  }
+}
+function onBuildBlur() {
+  const el = document.getElementById('buildPrompt');
+  if (!el || el.value.trim() === '') {
+    phPaused = false;
+    startPlaceholderCycle();
+  }
+  const wrap = document.getElementById('buildWrap');
+  if (wrap) {
+    wrap.style.borderColor = '';
+    wrap.style.boxShadow = '';
+  }
+}
+function onBuildInput(el) {
+  const count = document.getElementById('charCount');
+  if (count) count.textContent = el.value.length + ' / 4000';
+  const btn = document.getElementById('buildSendBtn');
+  if (btn) btn.style.background = el.value.trim() ? 'var(--accent)' : 'var(--surface-2)';
+}
 
-// Use placeholder colored cards since Roblox CDN requires auth
+// ── FLOATING GAME CARDS ──
 const gameColors = [
-  { color: '#1a3a5c', label: 'Combat Game', icon: '⚔️' },
-  { color: '#1a4a2a', label: 'Farming Sim', icon: '🌾' },
-  { color: '#3a1a4a', label: 'Tower Defense', icon: '🏰' },
-  { color: '#4a2a1a', label: 'Obby World', icon: '🏃' },
-  { color: '#1a3a4a', label: 'Tycoon Game', icon: '🏭' },
-  { color: '#4a1a1a', label: 'Battle Royale', icon: '🎯' },
-  { color: '#2a1a4a', label: 'RPG Adventure', icon: '🗡️' },
+  { color: 'linear-gradient(135deg,#1a2a4a,#0d1a30)', label: 'Combat Game', icon: '⚔️', accent: '#4a8fff' },
+  { color: 'linear-gradient(135deg,#1a3a2a,#0d2018)', label: 'Farming Sim', icon: '🌾', accent: '#4aff8a' },
+  { color: 'linear-gradient(135deg,#3a1a4a,#200d30)', label: 'Tower Defense', icon: '🏰', accent: '#c44aff' },
+  { color: 'linear-gradient(135deg,#4a2a1a,#301808)', label: 'Obby World', icon: '🏃', accent: '#ff8a4a' },
+  { color: 'linear-gradient(135deg,#1a3a4a,#0d2030)', label: 'Tycoon Game', icon: '🏭', accent: '#4affee' },
+  { color: 'linear-gradient(135deg,#4a1a1a,#300d0d)', label: 'Battle Royale', icon: '🎯', accent: '#ff4a4a' },
+  { color: 'linear-gradient(135deg,#2a1a4a,#180d30)', label: 'RPG Adventure', icon: '🗡️', accent: '#ff4aaa' },
+  { color: 'linear-gradient(135deg,#3a3a1a,#202008)', label: 'Racing Game', icon: '🏎️', accent: '#ffee4a' },
 ];
 
 function spawnGameCards() {
@@ -1288,14 +1346,14 @@ function spawnGameCards() {
   bg.innerHTML = '';
 
   const positions = [
-    { top: '8%',  left: '2%',  w: 180, h: 110, rot: -4 },
-    { top: '5%',  left: '28%', w: 160, h: 100, rot: 3  },
-    { top: '10%', right: '3%', w: 190, h: 115, rot: -2 },
-    { top: '38%', left: '1%',  w: 170, h: 105, rot: 5  },
-    { top: '42%', right: '2%', w: 175, h: 108, rot: -3 },
-    { top: '68%', left: '8%',  w: 185, h: 112, rot: 2  },
-    { top: '65%', right: '8%', w: 165, h: 102, rot: -5 },
-    { top: '72%', left: '38%', w: 172, h: 106, rot: 4  },
+    { top: '6%',  left: '1%',   w: 185, h: 115, rot: -5 },
+    { top: '4%',  left: '24%',  w: 165, h: 103, rot: 3  },
+    { top: '8%',  right: '1%',  w: 195, h: 120, rot: -2 },
+    { top: '36%', left: '0%',   w: 175, h: 108, rot: 6  },
+    { top: '40%', right: '0%',  w: 178, h: 110, rot: -4 },
+    { top: '66%', left: '5%',   w: 188, h: 116, rot: 3  },
+    { top: '63%', right: '5%',  w: 168, h: 104, rot: -6 },
+    { top: '70%', left: '35%',  w: 175, h: 108, rot: 4  },
   ];
 
   positions.forEach((pos, i) => {
@@ -1303,32 +1361,45 @@ function spawnGameCards() {
     const card = document.createElement('div');
     card.className = 'game-float';
     Object.assign(card.style, {
-      width: pos.w + 'px',
-      height: pos.h + 'px',
-      top: pos.top || 'auto',
-      left: pos.left || 'auto',
-      right: pos.right || 'auto',
-      bottom: pos.bottom || 'auto',
+      width: pos.w + 'px', height: pos.h + 'px',
+      top: pos.top || 'auto', left: pos.left || 'auto',
+      right: pos.right || 'auto', bottom: pos.bottom || 'auto',
       transform: `rotate(${pos.rot}deg)`,
+      transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.4,0.64,1), box-shadow 0.3s ease',
     });
     card.innerHTML = `
-      <div style="width:100%;height:100%;background:${g.color};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
-        <span style="font-size:32px;">${g.icon}</span>
-        <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);">${g.label}</span>
+      <div style="width:100%;height:100%;background:${g.color};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, ${g.accent}22, transparent 60%);"></div>
+        <span style="font-size:34px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4));">${g.icon}</span>
+        <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.8);letter-spacing:0.03em;">${g.label}</span>
+        <div style="width:30px;height:2px;background:${g.accent};border-radius:9999px;opacity:0.6;"></div>
       </div>
       <div class="game-float-label">${g.label}</div>`;
 
-    // Mouse proximity effect
     card.addEventListener('mouseenter', () => {
-      card.style.transform = `rotate(0deg) scale(1.15)`;
+      card.style.transform = `rotate(0deg) scale(1.18)`;
+      card.style.opacity = '0.7';
+      card.style.boxShadow = `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${g.accent}33`;
     });
     card.addEventListener('mouseleave', () => {
       card.style.transform = `rotate(${pos.rot}deg) scale(1)`;
+      card.style.opacity = '0.15';
+      card.style.boxShadow = '0 12px 40px rgba(0,0,0,0.5)';
     });
 
+    // Staggered entrance
+    card.style.opacity = '0';
+    card.style.transform = `rotate(${pos.rot}deg) scale(0.8)`;
     bg.appendChild(card);
+    setTimeout(() => {
+      card.style.opacity = '0.15';
+      card.style.transform = `rotate(${pos.rot}deg) scale(1)`;
+    }, 100 + i * 80);
   });
 }
+
+// Keep old startTypewriter name as alias just in case
+function startTypewriter() { startPlaceholderCycle(); }
 
 if (state.accessToken) {
   // Hide everything while we check the token
