@@ -10,23 +10,24 @@ const CODE_GEN_SYSTEM = `You are Lime AI, a master Roblox Luau developer with fu
 When the user describes what they want, generate COMPLETE, WORKING Luau code that builds EVERYTHING programmatically.
 
 CRITICAL RULES:
-- Output ONLY a JSON object with this exact structure:
-  {"scriptName": "DescriptiveName", "scriptType": "Script", "insertLocation": "ServerScriptService", "code": "-- full luau code here", "explanation": "One sentence"}
-- Choose scriptType AND insertLocation automatically based on what makes sense:
+- If the feature needs multiple scripts in different locations, output a JSON array:
+  [
+    {"scriptName": "Name1", "scriptType": "Script", "insertLocation": "ServerScriptService", "code": "-- server code", "explanation": "one sentence"},
+    {"scriptName": "Name2", "scriptType": "LocalScript", "insertLocation": "StarterGui", "code": "-- client code", "explanation": "one sentence"}
+  ]
+- If only one script is needed, output a single JSON object:
+  {"scriptName": "Name", "scriptType": "Script", "insertLocation": "ServerScriptService", "code": "-- code here", "explanation": "one sentence"}
+- Choose scriptType AND insertLocation automatically:
   - Server game logic, datastores, events → scriptType: "Script", insertLocation: "ServerScriptService"
   - GUI screens, shop menus, HUDs → scriptType: "LocalScript", insertLocation: "StarterGui"
   - Player client code → scriptType: "LocalScript", insertLocation: "StarterPlayerScripts"
   - Character movement, animations → scriptType: "LocalScript", insertLocation: "StarterCharacterScripts"
   - Tools, weapons, swords → scriptType: "Script", insertLocation: "StarterPack"
   - Shared modules → scriptType: "ModuleScript", insertLocation: "ReplicatedStorage"
-  - World objects, maps, obstacles → scriptType: "Script", insertLocation: "ServerScriptService"
 - Build ALL visuals using Instance.new() — create every Part, Model, WeldConstraint, SpecialMesh, ScreenGui, Frame, TextLabel in code
-- For weapons: create Tool, Handle part, blade parts, welds — all in code using Instance.new()
-- For GUIs: create ScreenGui, Frames, TextLabels, TextButtons — all in code
 - NEVER assume anything exists in the game — create everything from scratch
 - Use pcall for error handling
-- Keep code clean with comments
-- Output ONLY the JSON object, no markdown, no extra text`;
+- Output ONLY the JSON, no markdown, no extra text`;
 
 export async function createCodeJob(
   userId: string, prompt: string,
@@ -53,20 +54,32 @@ async function processCodeJob(
     const rawText = result.response.text();
     const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(clean);
-    if (!parsed.code || !parsed.scriptName) throw new Error('Missing code or scriptName');
 
-    const scriptType = parsed.scriptType || 'Script';
-    const insertLocation = parsed.insertLocation || 'ServerScriptService';
+    const items = Array.isArray(parsed) ? parsed : [parsed];
 
+    for (const item of items) {
+      if (!item.code || !item.scriptName) continue;
+      const scriptType = item.scriptType || 'Script';
+      const insertLocation = item.insertLocation || 'ServerScriptService';
+
+      await db.query(
+        `INSERT INTO code_jobs (user_id, prompt, script_type, insert_location, status, generated_code, explanation, script_name, completed_at)
+         VALUES ($1, $2, $3, $4, 'completed', $5, $6, $7, NOW())`,
+        [userId, prompt, scriptType, insertLocation, item.code, item.explanation, item.scriptName]
+      );
+    }
+
+    // Mark original job as completed
     await db.query(
-      `UPDATE code_jobs SET status = 'completed', generated_code = $1,
-       explanation = $2, script_name = $3, script_type = $4, insert_location = $5, completed_at = NOW() WHERE id = $6`,
-      [parsed.code, parsed.explanation, parsed.scriptName, scriptType, insertLocation, jobId]
+      `UPDATE code_jobs SET status = 'completed', script_name = $1, completed_at = NOW() WHERE id = $2`,
+      [items[0]?.scriptName || 'LimeAI_Script', jobId]
     );
-    logger.info('Code job completed', { jobId, scriptName: parsed.scriptName, scriptType, insertLocation });
+
+    logger.info('Code job completed', { jobId, count: items.length });
+
     await db.query(
       `INSERT INTO analytics_events (user_id, event_type, properties) VALUES ($1, 'code_job_completed', $2)`,
-      [userId, JSON.stringify({ jobId, scriptType, insertLocation })]
+      [userId, JSON.stringify({ jobId, count: items.length })]
     );
   } catch (err: unknown) {
     const error = err as Error;
@@ -83,7 +96,7 @@ export async function getPendingJobsForUser(userId: string) {
     `SELECT id, script_name, script_type, insert_location,
             generated_code, explanation, created_at
      FROM code_jobs WHERE user_id = $1 AND status = 'completed'
-     ORDER BY created_at ASC LIMIT 10`,
+     ORDER BY created_at ASC LIMIT 20`,
     [userId]
   );
   return {
