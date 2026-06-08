@@ -74,6 +74,65 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 .reveal-delay-4 { transition-delay: 0.4s; }
 .reveal-delay-5 { transition-delay: 0.5s; }
 
+/* ── LOADING SCREEN ── */
+#loadingScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#loadingScreen.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+.loading-logo { width: 64px; height: 64px; border-radius: 18px; overflow: hidden; animation: loading-bounce 1s ease-in-out infinite; }
+.loading-logo img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes loading-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.loading-bar-wrap { width: 120px; height: 3px; background: var(--surface-2); border-radius: 9999px; overflow: hidden; }
+.loading-bar { height: 100%; background: var(--accent); border-radius: 9999px; animation: loading-progress 1.4s ease-in-out forwards; }
+@keyframes loading-progress { 0%{width:0%} 70%{width:85%} 100%{width:100%} }
+.loading-text { font-size: 13px; color: var(--text-3); font-weight: 500; letter-spacing: 0.04em; }
+
+/* ── HERO TEXT ANIMATION ── */
+.hero-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(40px);
+  animation: word-up 0.5s ease forwards;
+}
+@keyframes word-up { to { opacity: 1; transform: translateY(0); } }
+.hero-tag-anim { opacity: 0; animation: fade-up 0.5s ease 0.05s forwards; }
+.hero-sub-anim  { opacity: 0; animation: fade-up 0.5s ease 0.9s forwards; }
+.hero-btn-anim  { opacity: 0; animation: fade-up 0.5s ease 1.1s forwards; }
+@keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
+
+/* ── BUILD PAGE BG GAME CARDS ── */
+.build-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.game-float {
+  position: absolute; border-radius: 16px; overflow: hidden;
+  opacity: 0.15; pointer-events: all;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  cursor: default;
+}
+.game-float:hover { opacity: 0.6; z-index: 10; }
+.game-float img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.game-float-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 8px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9);
+  opacity: 0; transition: opacity 0.2s;
+}
+.game-float:hover .game-float-label { opacity: 1; }
+
+/* ── TYPEWRITER ── */
+#typewriterText { color: var(--text-3); }
+.tw-cursor {
+  display: inline-block; width: 2px; height: 0.9em;
+  background: var(--accent); margin-left: 1px;
+  animation: cur-blink 0.75s step-end infinite; vertical-align: middle;
+}
+@keyframes cur-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
 /* ── LANDING PAGE ── */
 #landingPage { display: block; }
 
@@ -479,6 +538,13 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
 </head>
 <body>
 
+<!-- ════════ LOADING SCREEN ════════ -->
+<div id="loadingScreen">
+  <div class="loading-logo"><img src="./lychee-ai-logo.png" alt="Lychee AI"/></div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <div class="loading-text">Loading Lychee AI...</div>
+</div>
+
 <!-- ════════ LANDING PAGE ════════ -->
 <div id="landingPage">
 
@@ -503,10 +569,18 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
   <section class="hero">
     <div class="hero-grid">
       <div>
-        <div class="hero-tag reveal reveal-delay-1"><div class="hero-tag-dot"></div> Now in beta</div>
-        <h1 class="hero-title reveal reveal-delay-2">The AI that<br>codes your<br><span class="accent">Roblox game</span></h1>
-        <p class="hero-subtitle reveal reveal-delay-3">Describe what you want built. Lychee AI generates complete Luau code and drops it directly into Roblox Studio — no copy-paste, no setup.</p>
-        <div class="hero-btns reveal reveal-delay-4">
+        <div class="hero-tag hero-tag-anim"><div class="hero-tag-dot"></div> Now in beta</div>
+        <h1 class="hero-title">
+          <span class="hero-word" style="animation-delay:0.15s">The</span>
+          <span class="hero-word" style="animation-delay:0.25s"> AI</span>
+          <span class="hero-word" style="animation-delay:0.35s"> that</span><br>
+          <span class="hero-word" style="animation-delay:0.45s">codes</span>
+          <span class="hero-word" style="animation-delay:0.55s"> your</span><br>
+          <span class="hero-word accent" style="animation-delay:0.65s">Roblox</span>
+          <span class="hero-word accent" style="animation-delay:0.75s"> game</span>
+        </h1>
+        <p class="hero-subtitle hero-sub-anim">Describe what you want built. Lychee AI generates complete Luau code and drops it directly into Roblox Studio — no copy-paste, no setup.</p>
+        <div class="hero-btns hero-btn-anim">
           <button class="btn-hero-primary" onclick="showAuth('register')">Start Building →</button>
           <button class="btn-hero-ghost">Watch Demo</button>
         </div>
@@ -846,6 +920,9 @@ async function doLogin() {
   if (!result?.accessToken) { errEl.textContent = result?.error || 'Login failed'; errEl.style.display = 'block'; return; }
   state.accessToken = result.accessToken; state.refreshToken = result.refreshToken;
   localStorage.setItem('accessToken', result.accessToken); localStorage.setItem('refreshToken', result.refreshToken);
+  // Show loading screen during app init
+  const ls = document.getElementById('loadingScreen');
+  if (ls) { ls.classList.remove('gone'); ls.style.opacity = '1'; ls.style.visibility = 'visible'; }
   hideAuth(); initApp();
 }
 
@@ -873,10 +950,11 @@ async function initApp() {
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('appPage').style.display = 'none';
   state.user = await api('GET', '/user/me');
-  if (!state.user) { doLogout(); return; }
+  if (!state.user) { hideLoadingScreen(); doLogout(); return; }
   // Only show app once we have the user
   document.getElementById('appPage').style.display = 'block';
   document.getElementById('appPage').classList.remove('hidden');
+  hideLoadingScreen();
   const initials = (state.user.display_name || state.user.email || '?').slice(0, 2).toUpperCase();
   document.getElementById('sidebarAvatar').textContent = initials;
   document.getElementById('sidebarEmail').textContent = state.user.email;
@@ -904,9 +982,13 @@ function toggleFaq(el) {
 async function renderBuild() {
   const c = document.getElementById('mainContent');
   c.innerHTML = `
-    <div class="build-page">
-      <h1 class="build-title">Describe a <em>game mechanic...</em></h1>
-      <p class="build-subtitle">Lychee AI will generate the code and drop it straight into Studio</p>
+    <!-- Floating game screenshots background -->
+    <div class="build-bg" id="buildBg"></div>
+
+    <div class="build-page" style="position:relative;z-index:1;">
+      <h1 class="build-title">Describe a <em id="typewriterText"></em><span class="tw-cursor"></span></h1>
+      <p class="build-subtitle">Lychee AI generates the code and drops it straight into Studio</p>
+
       <div class="build-input-wrap" style="width:100%;max-width:680px;">
         <textarea class="build-textarea" id="buildPrompt" placeholder="Make a sword with damage, a shop GUI with currency, a round system..." rows="3"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitBuild()}"></textarea>
@@ -914,12 +996,14 @@ async function renderBuild() {
           <button class="build-send-btn" id="buildSendBtn" onclick="submitBuild()">➤</button>
         </div>
       </div>
+
       <div class="build-chips">
         <div class="build-chip" onclick="setPrompt('Make a combat system with sword, damage and kill counter')"><span class="build-chip-icon">⚔️</span> Combat system</div>
         <div class="build-chip" onclick="setPrompt('Make a shop GUI with currency display and buy buttons')"><span class="build-chip-icon">🛍️</span> Shop GUI</div>
         <div class="build-chip" onclick="setPrompt('Make a round system with lobby, countdown and winner screen')"><span class="build-chip-icon">🎮</span> Round system</div>
         <div class="build-chip" onclick="setPrompt('Make a leaderboard that saves stats with DataStore')"><span class="build-chip-icon">🏆</span> Leaderboard</div>
       </div>
+
       <div id="buildStatus" style="margin-top:20px;font-size:13px;color:var(--text-3);text-align:center;"></div>
 
       <div style="width:100%;max-width:680px;margin-top:40px;">
@@ -930,11 +1014,15 @@ async function renderBuild() {
         <div id="jobsList"><div style="color:var(--text-3);font-size:13px;text-align:center;padding:20px;">Loading...</div></div>
       </div>
     </div>
+
     <div class="studio-pill">
       <div class="studio-pill-dot"></div>
       Make sure Roblox Studio is open with the Lychee AI plugin running
     </div>`;
+
   loadJobs();
+  startTypewriter();
+  spawnGameCards();
 }
 
 function setPrompt(text) {
@@ -1132,6 +1220,116 @@ function toast(msg, type='success') {
   document.body.appendChild(el); setTimeout(()=>el.remove(),3000);
 }
 
+// ── LOADING SCREEN ──
+function hideLoadingScreen() {
+  const el = document.getElementById('loadingScreen');
+  if (el) { el.classList.add('gone'); setTimeout(() => el.remove(), 600); }
+}
+
+// ── TYPEWRITER ──
+const twPhrases = [
+  'game mechanic...',
+  'combat system...',
+  'shop GUI...',
+  'round system...',
+  'leaderboard...',
+  'sword tool...',
+  'DataStore...',
+  'NPC with AI...',
+  'movement system...',
+  'farming system...',
+];
+let twIndex = 0, twChar = 0, twDeleting = false, twTimer = null;
+function startTypewriter() {
+  const el = document.getElementById('typewriterText');
+  if (!el) return;
+  clearTimeout(twTimer);
+  twIndex = 0; twChar = 0; twDeleting = false;
+  function tick() {
+    const el = document.getElementById('typewriterText');
+    if (!el) return;
+    const phrase = twPhrases[twIndex % twPhrases.length];
+    if (!twDeleting) {
+      twChar++;
+      el.textContent = phrase.slice(0, twChar);
+      if (twChar === phrase.length) { twDeleting = true; twTimer = setTimeout(tick, 1800); return; }
+      twTimer = setTimeout(tick, 60);
+    } else {
+      twChar--;
+      el.textContent = phrase.slice(0, twChar);
+      if (twChar === 0) { twDeleting = false; twIndex++; twTimer = setTimeout(tick, 300); return; }
+      twTimer = setTimeout(tick, 35);
+    }
+  }
+  tick();
+}
+
+// ── FLOATING GAME CARDS ──
+const gameImages = [
+  { url: 'https://tr.rbxcdn.com/0e4a16b7b1b4c5d5e6f7a8b9c0d1e2f3/512/512/GameIcon/Webp', label: 'Blox Fruits' },
+  { url: 'https://tr.rbxcdn.com/180DAY-29a7c2c4b3d4e5f6a7b8c9d0e1f2a3b4/512/512/GameIcon/Webp', label: 'Adopt Me' },
+  { url: 'https://tr.rbxcdn.com/180DAY-deadbeef1234567890abcdef12345678/512/512/GameIcon/Webp', label: 'Pet Simulator' },
+];
+
+// Use placeholder colored cards since Roblox CDN requires auth
+const gameColors = [
+  { color: '#1a3a5c', label: 'Combat Game', icon: '⚔️' },
+  { color: '#1a4a2a', label: 'Farming Sim', icon: '🌾' },
+  { color: '#3a1a4a', label: 'Tower Defense', icon: '🏰' },
+  { color: '#4a2a1a', label: 'Obby World', icon: '🏃' },
+  { color: '#1a3a4a', label: 'Tycoon Game', icon: '🏭' },
+  { color: '#4a1a1a', label: 'Battle Royale', icon: '🎯' },
+  { color: '#2a1a4a', label: 'RPG Adventure', icon: '🗡️' },
+];
+
+function spawnGameCards() {
+  const bg = document.getElementById('buildBg');
+  if (!bg) return;
+  bg.innerHTML = '';
+
+  const positions = [
+    { top: '8%',  left: '2%',  w: 180, h: 110, rot: -4 },
+    { top: '5%',  left: '28%', w: 160, h: 100, rot: 3  },
+    { top: '10%', right: '3%', w: 190, h: 115, rot: -2 },
+    { top: '38%', left: '1%',  w: 170, h: 105, rot: 5  },
+    { top: '42%', right: '2%', w: 175, h: 108, rot: -3 },
+    { top: '68%', left: '8%',  w: 185, h: 112, rot: 2  },
+    { top: '65%', right: '8%', w: 165, h: 102, rot: -5 },
+    { top: '72%', left: '38%', w: 172, h: 106, rot: 4  },
+  ];
+
+  positions.forEach((pos, i) => {
+    const g = gameColors[i % gameColors.length];
+    const card = document.createElement('div');
+    card.className = 'game-float';
+    Object.assign(card.style, {
+      width: pos.w + 'px',
+      height: pos.h + 'px',
+      top: pos.top || 'auto',
+      left: pos.left || 'auto',
+      right: pos.right || 'auto',
+      bottom: pos.bottom || 'auto',
+      transform: `rotate(${pos.rot}deg)`,
+    });
+    card.innerHTML = `
+      <div style="width:100%;height:100%;background:${g.color};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+        <span style="font-size:32px;">${g.icon}</span>
+        <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);">${g.label}</span>
+      </div>
+      <div class="game-float-label">${g.label}</div>`;
+
+    // Mouse proximity effect
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = `rotate(0deg) scale(1.15)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = `rotate(${pos.rot}deg) scale(1)`;
+    });
+
+    bg.appendChild(card);
+  });
+}
+
 if (state.accessToken) {
   // Hide everything while we check the token
   document.getElementById('landingPage').style.display = 'none';
@@ -1139,6 +1337,7 @@ if (state.accessToken) {
 } else {
   // No token - show landing page
   document.getElementById('landingPage').style.display = 'block';
+  hideLoadingScreen();
   initScrollAnimations();
 }
 
