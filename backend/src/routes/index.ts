@@ -336,20 +336,6 @@ router.post('/billing/portal', requireAuth, async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 // POST /jobs — Website submits a "please code this" request
-router.post('/jobs/edit', requireAuth, checkBanned, planUsageLimit, async (req, res) => {
-  const schema = z.object({
-    prompt: z.string().min(5).max(4000),
-    existingCode: z.string().max(50000),
-    scriptName: z.string().max(100),
-  });
-  if (!validate(schema, req.body, res)) return;
-  try {
-    const { jobId } = await createEditJob(req.user!.sub, req.body.prompt, req.body.existingCode, req.body.scriptName);
-    res.status(202).json({ jobId, message: 'Edit job created.' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create edit job' });
-  }
-});
 router.post('/jobs', requireAuth, checkBanned, planUsageLimit, async (req, res) => {
   const schema = z.object({
     prompt:         z.string().min(5).max(4000),
