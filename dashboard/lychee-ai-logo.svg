@@ -1,0 +1,34 @@
+<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Lychee AI Logo</title>
+<desc>A pink lychee fruit with bumpy texture, stem and leaf on a dark rounded square background</desc>
+
+<rect width="512" height="512" fill="#1a1a1a" rx="90"/>
+
+<ellipse cx="252" cy="278" rx="178" ry="182" fill="#e8547a"/>
+
+<ellipse cx="180" cy="210" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="230" cy="190" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="285" cy="185" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="335" cy="205" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="360" cy="255" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="350" cy="310" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="310" cy="350" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="255" cy="365" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="200" cy="350" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="160" cy="310" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="148" cy="258" rx="22" ry="20" fill="#d4476c" opacity="0.6"/>
+<ellipse cx="165" cy="255" rx="18" ry="16" fill="#d4476c" opacity="0.4"/>
+<ellipse cx="252" cy="265" rx="20" ry="18" fill="#d4476c" opacity="0.5"/>
+<ellipse cx="310" cy="278" rx="18" ry="16" fill="#d4476c" opacity="0.4"/>
+<ellipse cx="210" cy="290" rx="18" ry="16" fill="#d4476c" opacity="0.4"/>
+<ellipse cx="270" cy="320" rx="18" ry="16" fill="#d4476c" opacity="0.4"/>
+
+<ellipse cx="196" cy="218" rx="55" ry="38" fill="#f07090" opacity="0.45" transform="rotate(-20 196 218)"/>
+<ellipse cx="185" cy="210" rx="28" ry="18" fill="#f8a0b8" opacity="0.35" transform="rotate(-20 185 210)"/>
+
+<line x1="300" y1="100" x2="330" y2="62" stroke="#5a3a1a" stroke-width="12" stroke-linecap="round"/>
+
+<path d="M312 86 Q355 52 382 58 Q362 88 322 90 Z" fill="#3a8a2a"/>
+<path d="M312 86 Q352 66 382 58" stroke="#2a6a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+</svg>
