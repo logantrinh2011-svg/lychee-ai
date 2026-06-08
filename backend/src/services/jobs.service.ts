@@ -3,7 +3,7 @@ import { db } from '../db/client.js';
 import { logger } from '../utils/logger.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const MODEL = 'gemini-3.1-flash-lite';
+const MODEL = 'gemini-3.5-flash';
 
 const CODE_GEN_SYSTEM = `You are Lime AI, an expert Roblox Luau code generator. When the user describes what they want, generate COMPLETE, WORKING Luau code.
 
