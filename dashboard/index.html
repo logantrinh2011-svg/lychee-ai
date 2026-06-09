@@ -1059,43 +1059,71 @@ function removeTypingDots(responseDiv) {
 // ── PLAN APPROVAL ──
 function showPlanApproval(thinkingId, planSteps, onApprove, onReject) {
   const stepsEl = document.getElementById('thinkingSteps_' + thinkingId);
-  if (!stepsEl) { onApprove(); return; }
+  if (!stepsEl) { onApprove(); return null; }
 
-  // Plan ready chip
   const planChip = document.createElement('div');
   planChip.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-2);margin-bottom:3px;animation:step-in 0.2s ease;';
   planChip.innerHTML = `${STEP_GEAR_ICON}<span>Plan ready for approval</span>`;
   stepsEl.appendChild(planChip);
 
-  // Steps list
   const stepsBox = document.createElement('div');
+  stepsBox.id = 'planStepsBox';
   stepsBox.style.cssText = 'background:var(--surface);border-radius:10px;padding:12px 14px;margin-top:6px;animation:step-in 0.2s ease;';
   stepsBox.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);">
-        ${STEP_FILE_ICON} Steps (0/${planSteps.length})
-      </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">
+      ${STEP_FILE_ICON} <span id="planStepsCounter">Steps (0/${planSteps.length})</span>
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      ${planSteps.map(s => `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);">
-        <div style="width:14px;height:14px;border:1.5px solid var(--border-2);border-radius:3px;flex-shrink:0;"></div>
+    <div id="planStepsList" style="display:flex;flex-direction:column;gap:6px;">
+      ${planSteps.map((s, i) => `<div id="planStep_${i}" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);">
+        <div id="planStepCheck_${i}" style="width:15px;height:15px;border:1.5px solid var(--border-2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
         <span>${s}</span>
       </div>`).join('')}
     </div>
-    <div style="font-size:13px;color:var(--text-2);margin-top:12px;">Do you approve this plan?</div>
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button id="planYes" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;">
+    <div style="font-size:13px;color:var(--text-2);margin-top:12px;" id="planApprovalQuestion">Do you approve this plan?</div>
+    <div id="planApprovalBtns" style="display:flex;gap:8px;margin-top:8px;">
+      <button id="planYes" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background='var(--surface-2)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Yes
       </button>
-      <button id="planNo" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;">
+      <button id="planNo" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background='var(--surface-2)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> No
       </button>
     </div>`;
   stepsEl.appendChild(stepsBox);
   document.getElementById('agentMessages').scrollTop = 9999;
 
-  stepsBox.querySelector('#planYes').onclick = () => { stepsBox.remove(); planChip.remove(); onApprove(); };
-  stepsBox.querySelector('#planNo').onclick  = () => { stepsBox.remove(); planChip.remove(); onReject();  };
+  stepsBox.querySelector('#planYes').onclick = () => {
+    // Hide buttons and question
+    stepsBox.querySelector('#planApprovalBtns').style.display = 'none';
+    stepsBox.querySelector('#planApprovalQuestion').style.display = 'none';
+    planChip.remove();
+    onApprove(stepsBox, planSteps.length);
+  };
+  stepsBox.querySelector('#planNo').onclick = () => {
+    stepsBox.remove();
+    planChip.remove();
+    onReject();
+  };
+  return stepsBox;
+}
+
+// Animate a step checkbox — spinner while working, checkmark when done
+function setPlanStepLoading(index) {
+  const el = document.getElementById(`planStepCheck_${index}`);
+  if (!el) return;
+  el.innerHTML = `<div style="width:11px;height:11px;border:1.5px solid var(--text-3);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;"></div>`;
+}
+
+function setPlanStepDone(index, total) {
+  const el = document.getElementById(`planStepCheck_${index}`);
+  if (el) {
+    el.style.border = 'none';
+    el.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  }
+  const row = document.getElementById(`planStep_${index}`);
+  if (row) row.style.opacity = '0.6';
+  const counter = document.getElementById('planStepsCounter');
+  if (counter) counter.textContent = `Steps (${index + 1}/${total})`;
+  document.getElementById('agentMessages').scrollTop = 9999;
 }
 
 function addThinkingBubble() {
@@ -1249,23 +1277,57 @@ async function sendAgentCore(text, inputEl, btnEl) {
 
     // Job is ready, show plan approval — plugin won't pick it up (status=awaiting_approval)
     const planSteps = inferPlanSteps(text);
-    const approved = await new Promise(resolve => {
-      showPlanApproval(thinkingId, planSteps, () => resolve(true), () => resolve(false));
+    const { approved, stepsBox, stepCount } = await new Promise(resolve => {
+      showPlanApproval(thinkingId, planSteps,
+        (box, count) => resolve({ approved: true,  stepsBox: box, stepCount: count }),
+        ()           => resolve({ approved: false, stepsBox: null, stepCount: 0 })
+      );
     });
 
     if (!approved) {
-      // Cancel the job
       await api('POST', `/jobs/${result.jobId}/cancel`, {});
       await replaceThinkingWithResponse(thinkingId, `<p>No problem — let me know if you'd like to adjust the plan or try something different.</p>`, [], false);
       if (proj) { proj.messages.push({ role: 'agent', text: 'Plan cancelled.', steps: [] }); saveProjects(); }
       if (btnEl) { btnEl.disabled = false; } return;
     }
 
-    // Approved — release the job for the plugin to pick up
+    // Animate first step as loading
+    setPlanStepLoading(0);
+    document.getElementById('agentMessages').scrollTop = 9999;
+
+    // Release job for plugin
     await api('POST', `/jobs/${result.jobId}/release`, {});
 
-    // Insert immediately — job already completed
-    if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--surface-2)'; btnEl.style.color='var(--text-3)'; }
+    // Poll until plugin marks it inserted, ticking checkboxes along the way
+    await new Promise(resolve => {
+      let polls = 0;
+      let currentStep = 0;
+      const interval = setInterval(async () => {
+        const status = await api('GET', `/jobs/${result.jobId}/status`);
+        polls++;
+        if (status?.status === 'inserted') {
+          // Complete all remaining steps
+          for (let i = currentStep; i < stepCount; i++) {
+            setPlanStepDone(i, stepCount);
+            await sleep(300);
+          }
+          clearInterval(interval);
+          resolve();
+        } else if (status?.status === 'completed') {
+          // Still waiting for plugin — animate next step if time passes
+          if (polls % 3 === 0 && currentStep < stepCount - 1) {
+            setPlanStepDone(currentStep, stepCount);
+            currentStep++;
+            setPlanStepLoading(currentStep);
+          }
+        } else if (polls > 40) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 2000);
+    });
+
+    if (btnEl) { btnEl.disabled = false; }
     const loc  = jobReady.insertLocation || 'ServerScriptService';
     const name = jobReady.scriptName    || 'LycheeAI_Script';
     const expl = jobReady.explanation   || 'Script created and inserted into Studio.';
