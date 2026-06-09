@@ -3,7 +3,7 @@ import { db } from '../db/client.js';
 import { logger } from '../utils/logger.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const MODEL = 'gemini-3.5-flash';
+const MODEL = 'gemini-2.0-flash';
 
 const CODE_GEN_SYSTEM = `You are Lychee AI, a master Roblox Luau developer with full control of Roblox Studio.
 
@@ -129,7 +129,11 @@ export async function getPendingJobsForUser(userId: string) {
   const { rows } = await db.query(
     `SELECT id, script_name, script_type, insert_location,
             generated_code, explanation, created_at
-     FROM code_jobs WHERE user_id = $1 AND status = 'completed'
+     FROM code_jobs 
+     WHERE user_id = $1 
+       AND status = 'completed' 
+       AND generated_code IS NOT NULL 
+       AND generated_code != ''
      ORDER BY created_at ASC LIMIT 20`,
     [userId]
   );
