@@ -220,6 +220,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 
 /* ── AGENT CHAT ── */
 @keyframes waveDot{0%,60%,100%{transform:translateY(0);opacity:0.4;}30%{transform:translateY(-4px);opacity:1;}}
+@keyframes typeWave{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-4px);}}
 @keyframes msg-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 @keyframes step-in{from{opacity:0;transform:translateX(-6px);}to{opacity:1;transform:none;}}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -1020,19 +1021,25 @@ function renderUserMessage(text) {
   document.getElementById('agentMessages').scrollTop = 9999;
 }
 
-function renderAgentResponse(text, steps) {
+function renderAgentResponse(text, steps, isStreaming) {
   const msgList = document.getElementById('msgList');
   if (!msgList) return;
   const div = document.createElement('div');
   div.style.cssText = 'display:flex;gap:12px;align-items:flex-start;animation:msg-in 0.3s ease;';
+  const dotsHtml = isStreaming ? `<div id="typingDots_${Date.now()}" class="typing-dots" style="display:flex;gap:5px;margin-top:10px;align-items:center;">
+    <div style="width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:typeWave 1.1s ease-in-out infinite;animation-delay:0s;"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:typeWave 1.1s ease-in-out infinite;animation-delay:0.18s;"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:typeWave 1.1s ease-in-out infinite;animation-delay:0.36s;"></div>
+  </div>` : '';
   div.innerHTML = `
     <div style="width:30px;height:30px;border-radius:50%;overflow:hidden;flex-shrink:0;margin-top:3px;">
       <img src="./lychee-ai-logo.png" style="width:100%;height:100%;object-fit:cover;"/>
     </div>
     <div style="flex:1;max-width:720px;">
       <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:-0.3px;">Lychee</div>
-      <div style="font-size:15px;line-height:1.85;color:var(--text);">${text}</div>
-      ${steps.length ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:4px;">${steps.map(s=>`
+      <div class="agent-response-text" style="font-size:15px;line-height:1.85;color:var(--text);">${text}</div>
+      ${dotsHtml}
+      ${steps?.length ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:4px;">${steps.map(s=>`
         <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-2);">
           ${STEP_FILE_ICON} ${s.text}
         </div>`).join('')}</div>` : ''}
@@ -1040,6 +1047,55 @@ function renderAgentResponse(text, steps) {
     </div>`;
   msgList.appendChild(div);
   document.getElementById('agentMessages').scrollTop = 9999;
+  return div;
+}
+
+function removeTypingDots(responseDiv) {
+  if (!responseDiv) return;
+  const dots = responseDiv.querySelector('.typing-dots');
+  if (dots) { dots.style.transition='opacity 0.2s'; dots.style.opacity='0'; setTimeout(()=>dots.remove(), 200); }
+}
+
+// ── PLAN APPROVAL ──
+function showPlanApproval(thinkingId, planSteps, onApprove, onReject) {
+  const stepsEl = document.getElementById('thinkingSteps_' + thinkingId);
+  if (!stepsEl) { onApprove(); return; }
+
+  // Plan ready chip
+  const planChip = document.createElement('div');
+  planChip.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-2);margin-bottom:3px;animation:step-in 0.2s ease;';
+  planChip.innerHTML = `${STEP_GEAR_ICON}<span>Plan ready for approval</span>`;
+  stepsEl.appendChild(planChip);
+
+  // Steps list
+  const stepsBox = document.createElement('div');
+  stepsBox.style.cssText = 'background:var(--surface);border-radius:10px;padding:12px 14px;margin-top:6px;animation:step-in 0.2s ease;';
+  stepsBox.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);">
+        ${STEP_FILE_ICON} Steps (0/${planSteps.length})
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${planSteps.map(s => `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);">
+        <div style="width:14px;height:14px;border:1.5px solid var(--border-2);border-radius:3px;flex-shrink:0;"></div>
+        <span>${s}</span>
+      </div>`).join('')}
+    </div>
+    <div style="font-size:13px;color:var(--text-2);margin-top:12px;">Do you approve this plan?</div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="planYes" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;">
+        <span style="color:#4ade80;">✓</span> Yes
+      </button>
+      <button id="planNo" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;">
+        <span style="color:#f87171;">✗</span> No
+      </button>
+    </div>`;
+  stepsEl.appendChild(stepsBox);
+  document.getElementById('agentMessages').scrollTop = 9999;
+
+  stepsBox.querySelector('#planYes').onclick = () => { stepsBox.remove(); planChip.remove(); onApprove(); };
+  stepsBox.querySelector('#planNo').onclick  = () => { stepsBox.remove(); planChip.remove(); onReject();  };
 }
 
 function addThinkingBubble() {
@@ -1093,12 +1149,14 @@ function completeThinkingStep(stepId, text) {
   el.style.opacity = '0.6';
 }
 
-function replaceThinkingWithResponse(thinkingId, responseText, steps) {
+function replaceThinkingWithResponse(thinkingId, responseText, steps, streaming) {
   const el = document.getElementById(thinkingId);
-  if (!el) return;
+  if (!el) return null;
   el.style.transition = 'opacity 0.2s';
   el.style.opacity = '0';
-  setTimeout(() => { el.remove(); renderAgentResponse(responseText, steps); }, 200);
+  let responseDiv = null;
+  setTimeout(() => { el.remove(); responseDiv = renderAgentResponse(responseText, steps, streaming); }, 200);
+  return new Promise(r => setTimeout(() => r(responseDiv), 250));
 }
 
 // ── SEND CORE ──
@@ -1140,51 +1198,65 @@ async function sendAgentCore(text, inputEl, btnEl) {
   renderUserMessage(text);
 
   const thinkingId = addThinkingBubble();
-
-  // ── Step 1: Classify the request ──
   const isCodeRequest = /\b(make|create|build|add|script|code|system|button|gui|ui|tool|weapon|leaderboard|datastore|teleport|spawn|kill|damage|health|shop|tween|animate|part|model|remote|event|function|loop|timer|round|team|badge|game pass|npc|ai|pathfind|ragdoll|physics|touch|click|detect|save|load|module|local|server|replicated)\b/i.test(text);
 
   const s1 = addThinkingStep(thinkingId, 'Working on the task');
   await sleep(300);
 
-  let jobResult = null;
   let responseText = '';
   let steps = [];
 
   if (isCodeRequest) {
-    // ── Code path: dynamic investigation steps ──
     completeThinkingStep(s1, 'Working on the task');
 
-    // Investigate step — what services/scripts are involved
+    // Build conversation memory from project history
+    const history = (proj?.messages || []).slice(-10).map(m => `${m.role === 'user' ? 'User' : 'Lychee'}: ${typeof m.text === 'string' ? m.text.replace(/<[^>]+>/g,'') : ''}`).join('\n');
+
+    // Investigate
     const investigateLabel = inferInvestigation(text);
     const s2 = addThinkingStep(thinkingId, investigateLabel);
     await sleep(500);
     completeThinkingStep(s2, investigateLabel);
 
-    // Submit job with retry
+    // Generate plan steps
+    const planSteps = inferPlanSteps(text);
+
+    // Show plan approval
+    const approved = await new Promise(resolve => {
+      showPlanApproval(thinkingId, planSteps, () => resolve(true), () => resolve(false));
+    });
+
+    if (!approved) {
+      const responseDiv = await replaceThinkingWithResponse(thinkingId, `<p>No problem — let me know if you'd like to adjust the plan or try something different.</p>`, [], false);
+      if (proj) { proj.messages.push({ role: 'agent', text: 'Plan cancelled.', steps: [] }); saveProjects(); }
+      if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--accent)'; btnEl.style.color='white'; }
+      return;
+    }
+
+    // Submit job with memory context
     const s3 = addThinkingStep(thinkingId, 'Generating Luau script');
+    const promptWithMemory = history ? `Previous context:\n${history}\n\nNew request: ${text}` : text;
     let attempt = 0;
     let result = null;
     while (attempt < 3) {
-      result = await api('POST', '/jobs', { prompt: text, scriptType: inferScriptType(text), insertLocation: inferLocation(text) });
+      result = await api('POST', '/jobs', { prompt: promptWithMemory, scriptType: inferScriptType(text), insertLocation: inferLocation(text) });
       if (result?.jobId) break;
       attempt++;
-      if (attempt < 3) {
-        replaceStepText(s3, `Retrying… (attempt ${attempt + 1}/3)`);
-        await sleep(attempt * 2000);
-      }
+      if (attempt < 3) { replaceStepText(s3, `Retrying… (attempt ${attempt+1}/3)`); await sleep(attempt * 2000); }
     }
 
     if (!result?.jobId) {
       completeThinkingStep(s3, 'Generating Luau script');
-      replaceThinkingWithResponse(thinkingId, `<p>Gemini is busy right now — I tried 3 times. Please wait a moment and try again.</p>`, []);
-      if (btnEl) btnEl.disabled = false; return;
+      const responseDiv = await replaceThinkingWithResponse(thinkingId, `<p>Gemini is busy right now — I tried 3 times. Please wait a moment and try again.</p>`, [], false);
+      if (btnEl) { btnEl.disabled = false; } return;
     }
     completeThinkingStep(s3, 'Generated Luau script');
 
-    // Poll for job completion with dynamic steps
-    jobResult = await pollForJobWithSteps(result.jobId, thinkingId, text);
-    if (btnEl) btnEl.disabled = false;
+    // Show streaming dots while waiting
+    const responseDiv = await replaceThinkingWithResponse(thinkingId, `<p>Inserting your scripts into Studio...</p>`, [], true);
+
+    const jobResult = await pollForJobWithSteps(result.jobId, null, text);
+    if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--surface-2)'; btnEl.style.color='var(--text-3)'; }
 
     if (jobResult?._ok) {
       const loc  = jobResult.insertLocation || 'ServerScriptService';
@@ -1193,31 +1265,61 @@ async function sendAgentCore(text, inputEl, btnEl) {
       const type = jobResult.scriptType    || 'Script';
       steps = [{ text: `Created ${type} at ${loc}/${name}` }];
       responseText = `<p style="margin-bottom:14px;">${expl}</p><p>Placed in <strong>${loc}</strong> as <strong>${name}</strong>. Open your <strong>Explorer</strong> panel and press <strong>Play</strong> to test it.</p>`;
+      // Remove dots and update response
+      if (responseDiv) {
+        removeTypingDots(responseDiv);
+        const textEl = responseDiv.querySelector('.agent-response-text');
+        if (textEl) textEl.innerHTML = responseText;
+        const stepsContainer = document.createElement('div');
+        stepsContainer.style.cssText = 'margin-top:14px;display:flex;flex-direction:column;gap:4px;';
+        stepsContainer.innerHTML = steps.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-2);">${STEP_FILE_ICON} ${s.text}</div>`).join('');
+        responseDiv.querySelector('div[style*="max-width"]')?.insertBefore(stepsContainer, responseDiv.querySelector('div[style*="11px"]'));
+      }
     } else {
       const err = jobResult?._error || '';
-      const isGeminiBusy = err.includes('503') || err.includes('high demand') || err.includes('Service Unavailable') || err.includes('429');
-      const isTimeout = err === 'timeout';
-      if (isGeminiBusy) {
-        responseText = `<p>Gemini is overloaded right now and couldn't recover after retrying. Wait 30 seconds and try again.</p>`;
-      } else if (isTimeout) {
-        responseText = `<p>This took too long to generate. Try a simpler request or try again in a moment.</p>`;
-      } else {
-        responseText = `<p>Something went wrong generating your code. Make sure the Lychee AI plugin is open, then try again.</p>`;
+      const isGeminiBusy = err.includes('503') || err.includes('high demand') || err.includes('429');
+      if (isGeminiBusy) responseText = `<p>Gemini is overloaded right now. Wait 30 seconds and try again.</p>`;
+      else responseText = `<p>Something went wrong. Make sure the Lychee AI plugin is open and try again.</p>`;
+      if (responseDiv) {
+        removeTypingDots(responseDiv);
+        const textEl = responseDiv.querySelector('.agent-response-text');
+        if (textEl) textEl.innerHTML = responseText;
       }
     }
 
   } else {
-    // ── Conversational path: no fake steps ──
+    // Conversational
     completeThinkingStep(s1, 'Working on the task');
-    // Simple conversational reply via Gemini
+    const responseDiv = await replaceThinkingWithResponse(thinkingId, '', [], true);
     const convResult = await apiWithRetry('POST', '/jobs', { prompt: `Answer conversationally (no code unless asked): ${text}`, scriptType: 'Script', insertLocation: 'ServerScriptService' });
-    if (btnEl) btnEl.disabled = false;
+    if (btnEl) { btnEl.disabled = false; }
     const expl = convResult?.explanation || "I'm not sure about that — could you give me more detail?";
     responseText = `<p>${expl}</p>`;
+    if (responseDiv) {
+      removeTypingDots(responseDiv);
+      const textEl = responseDiv.querySelector('.agent-response-text');
+      if (textEl) textEl.innerHTML = responseText;
+    }
   }
 
   if (proj) { proj.messages.push({ role: 'agent', text: responseText, steps }); saveProjects(); }
-  replaceThinkingWithResponse(thinkingId, responseText, steps);
+}
+
+// ── Infer plan steps from prompt ──
+function inferPlanSteps(text) {
+  const steps = [];
+  if (/remote|event|function/i.test(text)) steps.push('Create RemoteEvent in ReplicatedStorage');
+  if (/module/i.test(text)) steps.push('Create ModuleScript in ReplicatedStorage');
+  if (/gui|ui|screen|button|label/i.test(text)) steps.push('Create ScreenGui with UI elements in StarterGui');
+  if (/leaderstats|leaderboard|points|cash|coins/i.test(text)) steps.push('Create leaderstats Script in ServerScriptService');
+  if (/local|client|player/i.test(text)) steps.push('Create LocalScript in StarterPlayerScripts');
+  // Always include the main script
+  const loc = inferLocation(text);
+  const type = inferScriptType(text);
+  const already = steps.some(s => s.includes(loc));
+  if (!already) steps.push(`Create ${type} in ${loc}`);
+  if (steps.length === 0) steps.push(`Create Script in ServerScriptService`);
+  return steps;
 }
 
 // ── Helpers for dynamic step text ──
@@ -1255,27 +1357,18 @@ function replaceStepText(stepId, newText) {
 }
 
 async function pollForJobWithSteps(jobId, thinkingId, prompt) {
-  const createdLabel = inferCreatedStep(prompt);
-  const sCreate = addThinkingStep(thinkingId, createdLabel);
-
   return new Promise(resolve => {
     let polls = 0;
     const interval = setInterval(async () => {
       const status = await api('GET', `/jobs/${jobId}/status`);
       polls++;
-
       if (status?.status === 'completed' || status?.status === 'inserted') {
-        completeThinkingStep(sCreate, createdLabel);
         clearInterval(interval);
         resolve({ ...status, _ok: true });
       } else if (status?.status === 'failed') {
-        completeThinkingStep(sCreate, createdLabel);
         clearInterval(interval);
-        // Pass back the error message so we can show it
         resolve({ _ok: false, _error: status.error || '' });
       } else if (polls > 50) {
-        // 100s timeout
-        completeThinkingStep(sCreate, createdLabel);
         clearInterval(interval);
         resolve({ _ok: false, _error: 'timeout' });
       }
