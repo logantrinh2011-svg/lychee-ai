@@ -3,7 +3,7 @@ import { db } from '../db/client.js';
 import { logger } from '../utils/logger.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const MODEL = 'gemini-2.0-flash';
+const MODEL = 'gemini-3.5-flash';
 
 const CODE_GEN_SYSTEM = `You are Lychee AI, a master Roblox Luau developer with full control of Roblox Studio.
 
