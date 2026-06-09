@@ -1247,6 +1247,9 @@ async function sendAgentCore(text, inputEl, btnEl) {
       if (btnEl) { btnEl.disabled = false; } return;
     }
 
+    // Job is ready — put it on hold so plugin doesn't pick it up yet
+    await api('POST', `/jobs/${result.jobId}/hold`, {});
+
     // NOW show plan approval — code is ready, fast to insert
     const planSteps = inferPlanSteps(text);
     const approved = await new Promise(resolve => {
@@ -1254,10 +1257,15 @@ async function sendAgentCore(text, inputEl, btnEl) {
     });
 
     if (!approved) {
+      // Cancel the job
+      await api('POST', `/jobs/${result.jobId}/cancel`, {});
       await replaceThinkingWithResponse(thinkingId, `<p>No problem — let me know if you'd like to adjust the plan or try something different.</p>`, [], false);
       if (proj) { proj.messages.push({ role: 'agent', text: 'Plan cancelled.', steps: [] }); saveProjects(); }
       if (btnEl) { btnEl.disabled = false; } return;
     }
+
+    // Approved — release the job for the plugin to pick up
+    await api('POST', `/jobs/${result.jobId}/release`, {});
 
     // Insert immediately — job already completed
     if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--surface-2)'; btnEl.style.color='var(--text-3)'; }
@@ -1343,7 +1351,7 @@ async function pollForJobWithSteps(jobId, thinkingId, prompt) {
     const interval = setInterval(async () => {
       const status = await api('GET', `/jobs/${jobId}/status`);
       polls++;
-      if (status?.status === 'completed' || status?.status === 'inserted') {
+      if (status?.status === 'completed' || status?.status === 'inserted' || status?.status === 'awaiting_approval') {
         clearInterval(interval);
         resolve({ ...status, _ok: true });
       } else if (status?.status === 'failed') {
