@@ -27,7 +27,6 @@ CRITICAL RULES:
 - Build ALL visuals using Instance.new() — create every Part, Model, WeldConstraint, SpecialMesh, ScreenGui, Frame, TextLabel in code
 - NEVER assume anything exists in the game — create everything from scratch
 - Use pcall for error handling
-- The prompt may include "Previous context:" followed by conversation history. Use this to understand what was already built and improve or build on top of it. Never recreate things that already exist unless asked.
 - Output ONLY the JSON, no markdown, no extra text`;
 
 // ── Retry wrapper for Gemini 503/429 errors ──
@@ -101,13 +100,13 @@ async function processCodeJob(
 
       await db.query(
         `INSERT INTO code_jobs (user_id, prompt, script_type, insert_location, status, generated_code, explanation, script_name, completed_at)
-         VALUES ($1, $2, $3, $4, 'completed', $5, $6, $7, NOW())`,
+         VALUES ($1, $2, $3, $4, 'awaiting_approval', $5, $6, $7, NOW())`,
         [userId, prompt, scriptType, insertLocation, item.code, item.explanation, item.scriptName]
       );
     }
 
     await db.query(
-      `UPDATE code_jobs SET status = 'completed', script_name = $1, completed_at = NOW() WHERE id = $2`,
+      `UPDATE code_jobs SET status = 'awaiting_approval', script_name = $1, completed_at = NOW() WHERE id = $2`,
       [items[0]?.scriptName || 'LycheeAI_Script', jobId]
     );
 
