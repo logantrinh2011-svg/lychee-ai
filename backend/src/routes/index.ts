@@ -1,5 +1,5 @@
 // ============================================================
-// Lime AI Platform — Express Router (all routes)
+// Lychee AI Platform — Express Router (all routes)
 // ============================================================
 
 import { Router, Request, Response } from 'express';
@@ -19,7 +19,6 @@ import { z } from 'zod';
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 
-// Input validation helpers
 const validate = (schema: z.ZodSchema, body: unknown, res: Response): boolean => {
   const result = schema.safeParse(body);
   if (!result.success) {
@@ -51,7 +50,6 @@ router.post('/auth/register', authRateLimit, async (req, res) => {
     const { userId, verifyToken } = await registerUser(
       req.body.email, req.body.password, req.body.username
     );
-    // TODO: Send verification email with verifyToken
     logger.info('User registered', { userId });
     res.status(201).json({ message: 'Account created. Check your email to verify.' });
   } catch (err: unknown) {
@@ -144,7 +142,7 @@ router.patch('/user/me', requireAuth, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════
-// CHAT / AI ROUTES (the core product)
+// CHAT / AI ROUTES
 // ═══════════════════════════════════════════════════
 router.post('/chat', requireAuth, checkBanned, planUsageLimit, async (req, res) => {
   const schema = z.object({
@@ -158,7 +156,6 @@ router.post('/chat', requireAuth, checkBanned, planUsageLimit, async (req, res) 
   const userId = req.user!.sub;
   const planName = req.user!.plan;
 
-  // Get plan token limits
   const { rows: planRows } = await db.query<{ max_tokens_per_request: number; requests_per_day: number; requests_per_month: number }>(
     `SELECT sp.max_tokens_per_request, sp.requests_per_day, sp.requests_per_month
      FROM users u JOIN subscription_plans sp ON u.plan_id = sp.id WHERE u.id = $1`,
@@ -168,24 +165,14 @@ router.post('/chat', requireAuth, checkBanned, planUsageLimit, async (req, res) 
 
   try {
     const conversationId = await ensureConversation(userId, rawConvId, message);
-
-    // Log analytics event
     await db.query(
-      `INSERT INTO analytics_events (user_id, event_type, properties)
-       VALUES ($1, 'chat_sent', $2)`,
+      `INSERT INTO analytics_events (user_id, event_type, properties) VALUES ($1, 'chat_sent', $2)`,
       [userId, JSON.stringify({ conversationId, messageLength: message.length, stream })]
     );
-
     if (stream) {
-      await streamChatWithClaude({
-        userId, userMessage: message, conversationId,
-        planName, maxTokens: plan.max_tokens_per_request, res,
-      });
+      await streamChatWithClaude({ userId, userMessage: message, conversationId, planName, maxTokens: plan.max_tokens_per_request, res });
     } else {
-      const result = await chatWithClaude({
-        userId, userMessage: message, conversationId,
-        planName, maxTokens: plan.max_tokens_per_request,
-      });
+      const result = await chatWithClaude({ userId, userMessage: message, conversationId, planName, maxTokens: plan.max_tokens_per_request });
       res.json({ conversationId, ...result });
     }
   } catch (err: unknown) {
@@ -205,17 +192,13 @@ router.post('/chat', requireAuth, checkBanned, planUsageLimit, async (req, res) 
 router.get('/conversations', requireAuth, async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
   const offset = parseInt(req.query.offset as string) || 0;
-
   const { rows } = await db.query(
     `SELECT c.id, c.title, c.created_at, c.updated_at,
-            COUNT(m.id) AS message_count,
-            MAX(m.created_at) AS last_message_at
-     FROM conversations c
-     LEFT JOIN messages m ON m.conversation_id = c.id
+            COUNT(m.id) AS message_count, MAX(m.created_at) AS last_message_at
+     FROM conversations c LEFT JOIN messages m ON m.conversation_id = c.id
      WHERE c.user_id = $1 AND c.archived = false
      GROUP BY c.id, c.title, c.created_at, c.updated_at
-     ORDER BY COALESCE(MAX(m.created_at), c.created_at) DESC
-     LIMIT $2 OFFSET $3`,
+     ORDER BY COALESCE(MAX(m.created_at), c.created_at) DESC LIMIT $2 OFFSET $3`,
     [req.user!.sub, limit, offset]
   );
   res.json({ conversations: rows, limit, offset });
@@ -225,12 +208,9 @@ router.get('/conversations/:id', requireAuth, async (req, res) => {
   const { rows } = await db.query(
     `SELECT c.*, array_agg(
        json_build_object('id', m.id, 'role', m.role, 'content', m.content, 'created_at', m.created_at)
-       ORDER BY m.created_at
-     ) AS messages
-     FROM conversations c
-     LEFT JOIN messages m ON m.conversation_id = c.id
-     WHERE c.id = $1 AND c.user_id = $2
-     GROUP BY c.id`,
+       ORDER BY m.created_at) AS messages
+     FROM conversations c LEFT JOIN messages m ON m.conversation_id = c.id
+     WHERE c.id = $1 AND c.user_id = $2 GROUP BY c.id`,
     [req.params.id, req.user!.sub]
   );
   if (rows.length === 0) { res.status(404).json({ error: 'Conversation not found' }); return; }
@@ -238,10 +218,7 @@ router.get('/conversations/:id', requireAuth, async (req, res) => {
 });
 
 router.delete('/conversations/:id', requireAuth, async (req, res) => {
-  await db.query(
-    `UPDATE conversations SET archived = true WHERE id = $1 AND user_id = $2`,
-    [req.params.id, req.user!.sub]
-  );
+  await db.query(`UPDATE conversations SET archived = true WHERE id = $1 AND user_id = $2`, [req.params.id, req.user!.sub]);
   res.json({ message: 'Conversation archived' });
 });
 
@@ -250,47 +227,19 @@ router.delete('/conversations/:id', requireAuth, async (req, res) => {
 // ═══════════════════════════════════════════════════
 router.get('/usage', requireAuth, async (req, res) => {
   const userId = req.user!.sub;
-
   const [daily, monthly, planInfo] = await Promise.all([
     db.query<{ count: string; tokens_in: string; tokens_out: string }>(
-      `SELECT COUNT(*) AS count,
-              COALESCE(SUM(tokens_input), 0) AS tokens_in,
-              COALESCE(SUM(tokens_output), 0) AS tokens_out
-       FROM usage_logs WHERE user_id = $1 AND success = true
-         AND created_at >= DATE_TRUNC('day', NOW())`,
-      [userId]
-    ),
+      `SELECT COUNT(*) AS count, COALESCE(SUM(tokens_input),0) AS tokens_in, COALESCE(SUM(tokens_output),0) AS tokens_out
+       FROM usage_logs WHERE user_id=$1 AND success=true AND created_at>=DATE_TRUNC('day',NOW())`, [userId]),
     db.query<{ count: string; tokens_in: string; tokens_out: string; cost: string }>(
-      `SELECT COUNT(*) AS count,
-              COALESCE(SUM(tokens_input), 0) AS tokens_in,
-              COALESCE(SUM(tokens_output), 0) AS tokens_out,
-              COALESCE(SUM(cost_usd), 0) AS cost
-       FROM usage_logs WHERE user_id = $1 AND success = true
-         AND created_at >= DATE_TRUNC('month', NOW())`,
-      [userId]
-    ),
+      `SELECT COUNT(*) AS count, COALESCE(SUM(tokens_input),0) AS tokens_in, COALESCE(SUM(tokens_output),0) AS tokens_out, COALESCE(SUM(cost_usd),0) AS cost
+       FROM usage_logs WHERE user_id=$1 AND success=true AND created_at>=DATE_TRUNC('month',NOW())`, [userId]),
     db.query<{ requests_per_day: number; requests_per_month: number }>(
-      `SELECT sp.requests_per_day, sp.requests_per_month
-       FROM users u JOIN subscription_plans sp ON u.plan_id = sp.id
-       WHERE u.id = $1`,
-      [userId]
-    ),
+      `SELECT sp.requests_per_day, sp.requests_per_month FROM users u JOIN subscription_plans sp ON u.plan_id=sp.id WHERE u.id=$1`, [userId]),
   ]);
-
   res.json({
-    today: {
-      requests: parseInt(daily.rows[0].count),
-      tokensInput: parseInt(daily.rows[0].tokens_in),
-      tokensOutput: parseInt(daily.rows[0].tokens_out),
-      limit: planInfo.rows[0]?.requests_per_day ?? 20,
-    },
-    month: {
-      requests: parseInt(monthly.rows[0].count),
-      tokensInput: parseInt(monthly.rows[0].tokens_in),
-      tokensOutput: parseInt(monthly.rows[0].tokens_out),
-      costUsd: parseFloat(monthly.rows[0].cost).toFixed(4),
-      limit: planInfo.rows[0]?.requests_per_month ?? 100,
-    },
+    today: { requests: parseInt(daily.rows[0].count), tokensInput: parseInt(daily.rows[0].tokens_in), tokensOutput: parseInt(daily.rows[0].tokens_out), limit: planInfo.rows[0]?.requests_per_day ?? 20 },
+    month: { requests: parseInt(monthly.rows[0].count), tokensInput: parseInt(monthly.rows[0].tokens_in), tokensOutput: parseInt(monthly.rows[0].tokens_out), costUsd: parseFloat(monthly.rows[0].cost).toFixed(4), limit: planInfo.rows[0]?.requests_per_month ?? 100 },
   });
 });
 
@@ -300,15 +249,10 @@ router.get('/usage', requireAuth, async (req, res) => {
 router.post('/billing/create-checkout', requireAuth, async (req, res) => {
   const schema = z.object({ planName: z.enum(['pro', 'team', 'enterprise']) });
   if (!validate(schema, req.body, res)) return;
-
-  const { rows: plan } = await db.query(
-    `SELECT * FROM subscription_plans WHERE name = $1`, [req.body.planName]
-  );
+  const { rows: plan } = await db.query(`SELECT * FROM subscription_plans WHERE name=$1`, [req.body.planName]);
   if (!plan[0]?.stripe_price_id) { res.status(400).json({ error: 'Plan not available' }); return; }
-
   const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    payment_method_types: ['card'],
+    mode: 'subscription', payment_method_types: ['card'],
     line_items: [{ price: plan[0].stripe_price_id, quantity: 1 }],
     success_url: `${process.env.DASHBOARD_URL}/billing?success=true`,
     cancel_url: `${process.env.DASHBOARD_URL}/billing?canceled=true`,
@@ -318,78 +262,69 @@ router.post('/billing/create-checkout', requireAuth, async (req, res) => {
 });
 
 router.post('/billing/portal', requireAuth, async (req, res) => {
-  const { rows } = await db.query(
-    `SELECT stripe_customer_id FROM subscriptions WHERE user_id = $1 LIMIT 1`,
-    [req.user!.sub]
-  );
+  const { rows } = await db.query(`SELECT stripe_customer_id FROM subscriptions WHERE user_id=$1 LIMIT 1`, [req.user!.sub]);
   if (!rows[0]?.stripe_customer_id) { res.status(400).json({ error: 'No billing account' }); return; }
-
-  const session = await stripe.billingPortal.sessions.create({
-    customer: rows[0].stripe_customer_id,
-    return_url: `${process.env.DASHBOARD_URL}/billing`,
-  });
+  const session = await stripe.billingPortal.sessions.create({ customer: rows[0].stripe_customer_id, return_url: `${process.env.DASHBOARD_URL}/billing` });
   res.json({ url: session.url });
 });
 
 // ═══════════════════════════════════════════════════
 // CODE JOBS — Website → Studio bridge
 // ═══════════════════════════════════════════════════
-
-// POST /jobs — Website submits a "please code this" request
 router.post('/jobs', requireAuth, checkBanned, planUsageLimit, async (req, res) => {
   const schema = z.object({
-    prompt:         z.string().min(5).max(4000),
-    scriptType:     z.enum(['Script', 'LocalScript', 'ModuleScript']).default('Script'),
+    prompt: z.string().min(5).max(4000),
+    scriptType: z.enum(['Script','LocalScript','ModuleScript']).default('Script'),
     insertLocation: z.string().max(100).default('ServerScriptService'),
   });
   if (!validate(schema, req.body, res)) return;
-
-  const { prompt, scriptType, insertLocation } = req.body;
-  const userId = req.user!.sub;
-
   try {
-    const { jobId } = await createCodeJob(userId, prompt, scriptType, insertLocation);
-    res.status(202).json({
-      jobId,
-      message: 'Job created. Claude is generating your code. The Studio plugin will insert it automatically.',
-    });
-  } catch (err) {
-    logger.error('Create job error', err);
-    res.status(500).json({ error: 'Failed to create code job' });
-  }
+    const { jobId } = await createCodeJob(req.user!.sub, req.body.prompt, req.body.scriptType, req.body.insertLocation);
+    res.status(202).json({ jobId, message: 'Job created. Lychee AI is generating your code. The Studio plugin will insert it automatically.' });
+  } catch (err) { logger.error('Create job error', err); res.status(500).json({ error: 'Failed to create code job' }); }
 });
 
-// GET /jobs/pending — Plugin polls this every 3 seconds to pick up new code
 router.get('/jobs/pending', requireAuth, async (req, res) => {
-  try {
-    const result = await getPendingJobsForUser(req.user!.sub);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch pending jobs' });
-  }
+  try { res.json(await getPendingJobsForUser(req.user!.sub)); }
+  catch { res.status(500).json({ error: 'Failed to fetch pending jobs' }); }
 });
 
-// GET /jobs/:id/status — Website polls this to show progress to the user
 router.get('/jobs/:id/status', requireAuth, async (req, res) => {
   const status = await getJobStatus(req.params.id, req.user!.sub);
   if (!status) { res.status(404).json({ error: 'Job not found' }); return; }
   res.json(status);
 });
 
-// POST /jobs/:id/inserted — Plugin calls this after it inserts the code into Studio
 router.post('/jobs/:id/inserted', requireAuth, async (req, res) => {
-  try {
-    await markJobInserted(req.params.id, req.user!.sub);
-    res.json({ message: 'Job marked as inserted' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to mark job inserted' });
-  }
+  try { await markJobInserted(req.params.id, req.user!.sub); res.json({ message: 'Job marked as inserted' }); }
+  catch { res.status(500).json({ error: 'Failed to mark job inserted' }); }
 });
 
-// GET /jobs — Website shows history of all code jobs
 router.get('/jobs', requireAuth, async (req, res) => {
-  const history = await getUserJobHistory(req.user!.sub);
-  res.json({ jobs: history });
+  res.json({ jobs: await getUserJobHistory(req.user!.sub) });
+});
+
+// ═══════════════════════════════════════════════════
+// PLUGIN HEARTBEAT & STATUS
+// ═══════════════════════════════════════════════════
+router.post('/plugin/heartbeat', requireAuth, async (req, res) => {
+  try {
+    await db.query(
+      `INSERT INTO plugin_sessions (user_id, last_seen) VALUES ($1, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET last_seen = NOW()`,
+      [req.user!.sub]
+    );
+    res.json({ ok: true });
+  } catch { res.json({ ok: false }); }
+});
+
+router.get('/plugin/status', requireAuth, async (req, res) => {
+  try {
+    const result = await db.query(`SELECT last_seen FROM plugin_sessions WHERE user_id=$1`, [req.user!.sub]);
+    if (!result.rows.length) return res.json({ connected: false });
+    const secondsAgo = (Date.now() - new Date(result.rows[0].last_seen).getTime()) / 1000;
+    res.json({ connected: secondsAgo < 10 });
+  } catch { res.json({ connected: false }); }
 });
 
 // ═══════════════════════════════════════════════════
@@ -399,56 +334,30 @@ router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
   const offset = parseInt(req.query.offset as string) || 0;
   const search = req.query.search as string;
-
-  let query = `SELECT u.id, u.email, u.username, u.is_banned, u.created_at,
-                       sp.name AS plan_name, u.last_login_at
-               FROM users u LEFT JOIN subscription_plans sp ON u.plan_id = sp.id
-               WHERE 1=1`;
+  let query = `SELECT u.id, u.email, u.username, u.is_banned, u.created_at, sp.name AS plan_name, u.last_login_at
+               FROM users u LEFT JOIN subscription_plans sp ON u.plan_id=sp.id WHERE 1=1`;
   const params: unknown[] = [];
-
-  if (search) {
-    params.push(`%${search}%`);
-    query += ` AND (u.email ILIKE $${params.length} OR u.username ILIKE $${params.length})`;
-  }
+  if (search) { params.push(`%${search}%`); query += ` AND (u.email ILIKE $${params.length} OR u.username ILIKE $${params.length})`; }
   params.push(limit, offset);
   query += ` ORDER BY u.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
-
   const { rows } = await db.query(query, params);
   res.json({ users: rows });
 });
 
 router.post('/admin/users/:id/ban', requireAuth, requireAdmin, async (req, res) => {
   const { reason } = req.body;
-  await db.query(
-    `UPDATE users SET is_banned = true, ban_reason = $1 WHERE id = $2`,
-    [reason, req.params.id]
-  );
-  await db.query(
-    `INSERT INTO audit_logs (actor_id, user_id, action, resource, resource_id, new_value)
-     VALUES ($1, $2, 'ban_user', 'user', $2, $3)`,
-    [req.user!.sub, req.params.id, JSON.stringify({ reason })]
-  );
+  await db.query(`UPDATE users SET is_banned=true, ban_reason=$1 WHERE id=$2`, [reason, req.params.id]);
+  await db.query(`INSERT INTO audit_logs (actor_id, user_id, action, resource, resource_id, new_value) VALUES ($1,$2,'ban_user','user',$2,$3)`, [req.user!.sub, req.params.id, JSON.stringify({ reason })]);
   res.json({ message: 'User banned' });
 });
 
-router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
+router.get('/admin/stats', requireAuth, requireAdmin, async (_req, res) => {
   const [users, revenue, usage] = await Promise.all([
-    db.query(`SELECT COUNT(*) AS total,
-              COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days') AS new_30d
-              FROM users`),
-    db.query(`SELECT COALESCE(SUM(amount_cents), 0) AS total_cents,
-              COALESCE(SUM(amount_cents) FILTER (WHERE created_at >= DATE_TRUNC('month', NOW())), 0) AS month_cents
-              FROM billing_records WHERE status = 'paid'`),
-    db.query(`SELECT COUNT(*) AS total_requests,
-              COALESCE(SUM(tokens_input + tokens_output), 0) AS total_tokens
-              FROM usage_logs WHERE success = true
-                AND created_at >= DATE_TRUNC('month', NOW())`),
+    db.query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE created_at>=NOW()-INTERVAL '30 days') AS new_30d FROM users`),
+    db.query(`SELECT COALESCE(SUM(amount_cents),0) AS total_cents, COALESCE(SUM(amount_cents) FILTER (WHERE created_at>=DATE_TRUNC('month',NOW())),0) AS month_cents FROM billing_records WHERE status='paid'`),
+    db.query(`SELECT COUNT(*) AS total_requests, COALESCE(SUM(tokens_input+tokens_output),0) AS total_tokens FROM usage_logs WHERE success=true AND created_at>=DATE_TRUNC('month',NOW())`),
   ]);
-  res.json({
-    users: users.rows[0],
-    revenue: revenue.rows[0],
-    usage: usage.rows[0],
-  });
+  res.json({ users: users.rows[0], revenue: revenue.rows[0], usage: usage.rows[0] });
 });
 
 export default router;
