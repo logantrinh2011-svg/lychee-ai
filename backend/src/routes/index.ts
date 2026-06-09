@@ -300,6 +300,24 @@ router.post('/jobs/:id/inserted', requireAuth, async (req, res) => {
   catch { res.status(500).json({ error: 'Failed to mark job inserted' }); }
 });
 
+// Hold job — approved by user, waiting for approval
+router.post('/jobs/:id/hold', requireAuth, async (req: any, res) => {
+  await db.query(`UPDATE code_jobs SET status='awaiting_approval' WHERE id=$1 AND user_id=$2`, [req.params.id, req.user!.sub]);
+  res.json({ ok: true });
+});
+
+// Release job — user approved, let plugin pick it up
+router.post('/jobs/:id/release', requireAuth, async (req: any, res) => {
+  await db.query(`UPDATE code_jobs SET status='completed' WHERE id=$1 AND user_id=$2`, [req.params.id, req.user!.sub]);
+  res.json({ ok: true });
+});
+
+// Cancel job — user rejected plan
+router.post('/jobs/:id/cancel', requireAuth, async (req: any, res) => {
+  await db.query(`UPDATE code_jobs SET status='cancelled' WHERE id=$1 AND user_id=$2`, [req.params.id, req.user!.sub]);
+  res.json({ ok: true });
+});
+
 router.get('/jobs', requireAuth, async (req, res) => {
   res.json({ jobs: await getUserJobHistory(req.user!.sub) });
 });
