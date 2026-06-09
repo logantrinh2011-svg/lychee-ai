@@ -1085,10 +1085,10 @@ function showPlanApproval(thinkingId, planSteps, onApprove, onReject) {
     <div style="font-size:13px;color:var(--text-2);margin-top:12px;">Do you approve this plan?</div>
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button id="planYes" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;">
-        <span style="color:#4ade80;">✓</span> Yes
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Yes
       </button>
       <button id="planNo" style="display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;">
-        <span style="color:#f87171;">✗</span> No
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> No
       </button>
     </div>`;
   stepsEl.appendChild(stepsBox);
@@ -1209,31 +1209,14 @@ async function sendAgentCore(text, inputEl, btnEl) {
   if (isCodeRequest) {
     completeThinkingStep(s1, 'Working on the task');
 
-    // Build conversation memory from project history
     const history = (proj?.messages || []).slice(-10).map(m => `${m.role === 'user' ? 'User' : 'Lychee'}: ${typeof m.text === 'string' ? m.text.replace(/<[^>]+>/g,'') : ''}`).join('\n');
 
-    // Investigate
     const investigateLabel = inferInvestigation(text);
     const s2 = addThinkingStep(thinkingId, investigateLabel);
     await sleep(500);
     completeThinkingStep(s2, investigateLabel);
 
-    // Generate plan steps
-    const planSteps = inferPlanSteps(text);
-
-    // Show plan approval
-    const approved = await new Promise(resolve => {
-      showPlanApproval(thinkingId, planSteps, () => resolve(true), () => resolve(false));
-    });
-
-    if (!approved) {
-      const responseDiv = await replaceThinkingWithResponse(thinkingId, `<p>No problem — let me know if you'd like to adjust the plan or try something different.</p>`, [], false);
-      if (proj) { proj.messages.push({ role: 'agent', text: 'Plan cancelled.', steps: [] }); saveProjects(); }
-      if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--accent)'; btnEl.style.color='white'; }
-      return;
-    }
-
-    // Submit job with memory context
+    // Generate job first
     const s3 = addThinkingStep(thinkingId, 'Generating Luau script');
     const promptWithMemory = history ? `Previous context:\n${history}\n\nNew request: ${text}` : text;
     let attempt = 0;
@@ -1247,45 +1230,43 @@ async function sendAgentCore(text, inputEl, btnEl) {
 
     if (!result?.jobId) {
       completeThinkingStep(s3, 'Generating Luau script');
-      const responseDiv = await replaceThinkingWithResponse(thinkingId, `<p>Gemini is busy right now — I tried 3 times. Please wait a moment and try again.</p>`, [], false);
+      await replaceThinkingWithResponse(thinkingId, `<p>Gemini is busy right now — I tried 3 times. Please wait a moment and try again.</p>`, [], false);
       if (btnEl) { btnEl.disabled = false; } return;
     }
+
+    // Wait for job to be ready
+    const jobReady = await pollForJobWithSteps(result.jobId, null, text);
     completeThinkingStep(s3, 'Generated Luau script');
 
-    // Show streaming dots while waiting
-    const responseDiv = await replaceThinkingWithResponse(thinkingId, `<p>Inserting your scripts into Studio...</p>`, [], true);
-
-    const jobResult = await pollForJobWithSteps(result.jobId, null, text);
-    if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--surface-2)'; btnEl.style.color='var(--text-3)'; }
-
-    if (jobResult?._ok) {
-      const loc  = jobResult.insertLocation || 'ServerScriptService';
-      const name = jobResult.scriptName    || 'LycheeAI_Script';
-      const expl = jobResult.explanation   || 'Script created and inserted into Studio.';
-      const type = jobResult.scriptType    || 'Script';
-      steps = [{ text: `Created ${type} at ${loc}/${name}` }];
-      responseText = `<p style="margin-bottom:14px;">${expl}</p><p>Placed in <strong>${loc}</strong> as <strong>${name}</strong>. Open your <strong>Explorer</strong> panel and press <strong>Play</strong> to test it.</p>`;
-      // Remove dots and update response
-      if (responseDiv) {
-        removeTypingDots(responseDiv);
-        const textEl = responseDiv.querySelector('.agent-response-text');
-        if (textEl) textEl.innerHTML = responseText;
-        const stepsContainer = document.createElement('div');
-        stepsContainer.style.cssText = 'margin-top:14px;display:flex;flex-direction:column;gap:4px;';
-        stepsContainer.innerHTML = steps.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-2);">${STEP_FILE_ICON} ${s.text}</div>`).join('');
-        responseDiv.querySelector('div[style*="max-width"]')?.insertBefore(stepsContainer, responseDiv.querySelector('div[style*="11px"]'));
-      }
-    } else {
-      const err = jobResult?._error || '';
+    if (!jobReady?._ok) {
+      const err = jobReady?._error || '';
       const isGeminiBusy = err.includes('503') || err.includes('high demand') || err.includes('429');
-      if (isGeminiBusy) responseText = `<p>Gemini is overloaded right now. Wait 30 seconds and try again.</p>`;
-      else responseText = `<p>Something went wrong. Make sure the Lychee AI plugin is open and try again.</p>`;
-      if (responseDiv) {
-        removeTypingDots(responseDiv);
-        const textEl = responseDiv.querySelector('.agent-response-text');
-        if (textEl) textEl.innerHTML = responseText;
-      }
+      await replaceThinkingWithResponse(thinkingId, isGeminiBusy
+        ? `<p>Gemini is overloaded right now. Wait 30 seconds and try again.</p>`
+        : `<p>Something went wrong generating code. Make sure the plugin is open and try again.</p>`, [], false);
+      if (btnEl) { btnEl.disabled = false; } return;
     }
+
+    // NOW show plan approval — code is ready, fast to insert
+    const planSteps = inferPlanSteps(text);
+    const approved = await new Promise(resolve => {
+      showPlanApproval(thinkingId, planSteps, () => resolve(true), () => resolve(false));
+    });
+
+    if (!approved) {
+      await replaceThinkingWithResponse(thinkingId, `<p>No problem — let me know if you'd like to adjust the plan or try something different.</p>`, [], false);
+      if (proj) { proj.messages.push({ role: 'agent', text: 'Plan cancelled.', steps: [] }); saveProjects(); }
+      if (btnEl) { btnEl.disabled = false; } return;
+    }
+
+    // Insert immediately — job already completed
+    if (btnEl) { btnEl.disabled = false; btnEl.style.background='var(--surface-2)'; btnEl.style.color='var(--text-3)'; }
+    const loc  = jobReady.insertLocation || 'ServerScriptService';
+    const name = jobReady.scriptName    || 'LycheeAI_Script';
+    const expl = jobReady.explanation   || 'Script created and inserted into Studio.';
+    const type = jobReady.scriptType    || 'Script';
+    steps = [{ text: `Created ${type} at ${loc}/${name}` }];
+    responseText = `<p style="margin-bottom:14px;">${expl}</p><p>Placed in <strong>${loc}</strong> as <strong>${name}</strong>. Open your <strong>Explorer</strong> panel and press <strong>Play</strong> to test it.</p>`;
 
   } else {
     // Conversational
