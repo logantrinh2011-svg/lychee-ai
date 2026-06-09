@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lychee AI — AI Coding Assistant for Roblox</title>
-<link rel="icon" href="./favicon.ico" type="image/x-icon"/>
-<link rel="icon" href="./lychee-ai-logo.png" type="image/png"/>
+<link rel="icon" href="/favicon.ico" type="image/x-icon"/>
+<link rel="icon" href="/lychee-ai-logo.png" type="image/png"/>
 <link rel="apple-touch-icon" href="./apple-touch-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#1c1c1c; --bg-2:#222; --bg-3:#2a2a2a;
@@ -17,7 +17,7 @@
   --text:#f0f0f0; --text-2:#a0a0a0; --text-3:#606060;
   --accent:#e8547a; --accent-2:#f07090; --accent-glow:rgba(232,84,122,0.2);
   --green:#4ade80; --red:#f87171; --amber:#fbbf24;
-  --font-display:'Syne',sans-serif; --font-sans:'DM Sans',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  --font-display:'Plus Jakarta Sans',sans-serif; --font-sans:'DM Sans',sans-serif; --font-mono:'JetBrains Mono',monospace;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
@@ -26,21 +26,21 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 
 /* ── SHINE ANIMATION ── */
 @keyframes shine {
-  0%   { background-position: -200% center; }
-  40%  { background-position: 200% center; }
-  100% { background-position: 200% center; }
+  0%   { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+  5%   { opacity: 1; }
+  30%  { transform: translateX(300%) skewX(-15deg); opacity: 0; }
+  100% { transform: translateX(300%) skewX(-15deg); opacity: 0; }
 }
 .shine-btn {
   position: relative;
   overflow: hidden;
-  background: white;
 }
 .shine-btn::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.7) 50%, transparent 60%);
-  background-size: 200% auto;
+  top: -10%; left: 0;
+  width: 40%; height: 120%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
   animation: shine 6s ease-in-out infinite;
   pointer-events: none;
 }
@@ -58,7 +58,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;}
 .nav-logo-img{width:34px;height:34px;border-radius:10px;overflow:hidden;flex-shrink:0;}
 .nav-logo-img img{width:100%;height:100%;object-fit:cover;}
-.nav-logo-text{font-family:var(--font-display);font-size:19px;font-weight:800;color:var(--text);}
+.nav-logo-text{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
 .nav-links{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);border-radius:9999px;padding:4px;border:1px solid var(--border);}
 .nav-link{padding:7px 16px;border-radius:9999px;font-size:14px;font-weight:500;color:var(--text-2);cursor:pointer;transition:all 0.15s;text-decoration:none;}
 .nav-link:hover{background:rgba(255,255,255,0.08);color:var(--text);}
@@ -76,7 +76,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(232,84,122,0.1);border:1px solid rgba(232,84,122,0.2);border-radius:9999px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:20px;opacity:0;animation:fade-up 0.5s ease 0.1s forwards;}
 .hero-tag-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse-dot 2s infinite;}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-.hero-title{font-family:var(--font-display);font-size:60px;font-weight:800;line-height:1.05;letter-spacing:-2px;margin-bottom:18px;}
+.hero-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:62px;font-weight:900;line-height:1.04;letter-spacing:-2.5px;margin-bottom:18px;}
 .hero-word{display:inline-block;opacity:0;transform:translateY(36px);animation:word-up 0.5s ease forwards;}
 @keyframes word-up{to{opacity:1;transform:none;}}
 .accent{color:var(--accent);}
@@ -104,7 +104,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 /* ── SECTIONS ── */
 .section{padding:90px 48px;max-width:1200px;margin:0 auto;}
 .section-tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border-2);border-radius:9999px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:18px;text-transform:uppercase;letter-spacing:0.06em;}
-.section-title{font-family:var(--font-display);font-size:46px;font-weight:800;letter-spacing:-1.5px;margin-bottom:10px;}
+.section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:46px;font-weight:800;letter-spacing:-1.5px;margin-bottom:10px;}
 
 /* ── TESTIMONIALS ── */
 .testimonials{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px;}
@@ -121,7 +121,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .feature-card:hover{border-color:rgba(232,84,122,0.3);transform:translateY(-2px);}
 .feature-card.big{grid-column:span 2;}
 .feature-icon{font-size:26px;margin-bottom:12px;}
-.feature-title{font-family:var(--font-display);font-size:17px;font-weight:700;margin-bottom:6px;}
+.feature-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;}
 .feature-desc{font-size:13px;color:var(--text-2);line-height:1.6;}
 
 /* ── FAQ ── */
@@ -140,7 +140,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .pricing-card.featured{border-color:var(--accent);box-shadow:0 0 36px rgba(232,84,122,0.1);}
 .pricing-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--accent);color:white;font-size:10px;font-weight:800;padding:3px 14px;border-radius:9999px;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;}
 .pricing-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;}
-.pricing-price{font-family:var(--font-display);font-size:40px;font-weight:800;letter-spacing:-2px;margin-bottom:2px;}
+.pricing-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:40px;font-weight:800;letter-spacing:-2px;margin-bottom:2px;}
 .pricing-period{font-size:13px;color:var(--text-3);margin-bottom:16px;}
 .pricing-divider{height:1px;background:var(--border);margin:16px 0;}
 .pricing-feature{font-size:13px;color:var(--text-2);padding:4px 0;display:flex;gap:8px;align-items:flex-start;}
@@ -152,7 +152,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 
 /* ── FOOTER ── */
 .footer{border-top:1px solid var(--border);padding:36px 48px;display:flex;align-items:center;justify-content:space-between;}
-.footer-logo{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:17px;font-weight:800;}
+.footer-logo{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;letter-spacing:-0.3px;}
 .footer-logo img{width:22px;height:22px;border-radius:6px;object-fit:cover;}
 .footer-links{display:flex;gap:22px;}
 .footer-link{font-size:13px;color:var(--text-3);text-decoration:none;transition:color 0.15s;}
@@ -165,7 +165,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .auth-modal-logo{text-align:center;margin-bottom:26px;}
 .auth-modal-icon{width:52px;height:52px;border-radius:14px;overflow:hidden;display:inline-block;margin-bottom:12px;box-shadow:0 0 24px var(--accent-glow);}
 .auth-modal-icon img{width:100%;height:100%;object-fit:cover;}
-.auth-modal-title{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+.auth-modal-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;}
 .auth-modal-sub{color:var(--text-2);font-size:14px;margin-top:4px;}
 .auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text-3);font-size:12px;}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
@@ -188,7 +188,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .sidebar-logo{display:flex;align-items:center;gap:10px;padding:6px 14px 18px;border-bottom:1px solid var(--border);margin-bottom:6px;}
 .sidebar-logo-img{width:28px;height:28px;border-radius:8px;overflow:hidden;flex-shrink:0;}
 .sidebar-logo-img img{width:100%;height:100%;object-fit:cover;}
-.sidebar-logo-text{font-family:var(--font-display);font-size:15px;font-weight:800;}
+.sidebar-logo-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;}
 .sidebar-logo-beta{font-size:9px;font-weight:700;background:rgba(232,84,122,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;}
 .sidebar-new{margin:0 10px 10px;display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:8px;background:var(--surface);border:1px solid var(--border-2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;}
 .sidebar-new:hover{background:var(--surface-2);border-color:var(--accent);}
@@ -234,7 +234,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px;}
 .stat-label{font-size:10px;color:var(--text-3);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
-.stat-value{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-1px;}
+.stat-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;}
 .stat-sub{font-size:11px;color:var(--text-3);margin-top:2px;}
 .progress-bar{height:3px;background:var(--bg-3);border-radius:9999px;overflow:hidden;margin-top:8px;}
 .progress-fill{height:100%;background:var(--accent);border-radius:9999px;transition:width 0.5s ease;}
@@ -318,7 +318,7 @@ tool.Parent = game:GetService(<span class="str">"StarterPack"</span>)</div>
   <!-- TESTIMONIALS -->
   <div style="border-top:1px solid var(--border);padding:80px 48px;">
     <div style="max-width:1200px;margin:0 auto;">
-      <h2 style="font-family:var(--font-display);font-size:42px;font-weight:800;letter-spacing:-1.5px;text-align:center;margin-bottom:44px;" class="reveal">Don't take our word for it</h2>
+      <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:42px;font-weight:800;letter-spacing:-1.5px;text-align:center;margin-bottom:44px;" class="reveal">Don't take our word for it</h2>
       <div class="testimonials">
         <div class="testimonial reveal reveal-delay-1"><div class="testimonial-user"><div class="testimonial-avatar">R</div><div><div class="testimonial-name">RblxDevKing</div><div class="testimonial-handle">@rblxdevking</div></div></div><div class="testimonial-text">Lychee AI dropped a complete shop GUI into my game in seconds. Biggest time saver I've ever used.</div></div>
         <div class="testimonial reveal reveal-delay-2"><div class="testimonial-user"><div class="testimonial-avatar">V</div><div><div class="testimonial-name">Voixcyy</div><div class="testimonial-handle">@voixcyy</div></div></div><div class="testimonial-text">It auto-selects the right service and script type. I just describe what I want and it appears in Studio. Insane.</div></div>
@@ -422,8 +422,14 @@ tool.Parent = game:GetService(<span class="str">"StarterPack"</span>)</div>
         <span style="font-size:11px;font-weight:600;color:var(--text-3);padding:2px 6px;border-radius:4px;background:var(--surface);">beta</span>
         <span id="topProjectName" style="font-size:14px;font-weight:500;color:var(--text);"></span>
       </div>
-      <!-- Right: avatar -->
-      <div id="topAvatar" onclick="toggleProfileMenu()" style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;cursor:pointer;transition:opacity 0.15s;user-select:none;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">?</div>
+      <!-- Right: Lychee brand (hidden when project open) + avatar -->
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="topBrand" style="display:flex;align-items:center;gap:8px;transition:opacity 0.3s;">
+          <div style="width:22px;height:22px;border-radius:6px;overflow:hidden;"><img src="./lychee-ai-logo.png" style="width:100%;height:100%;object-fit:cover;"/></div>
+          <span style="font-size:17px;font-weight:700;color:var(--text);letter-spacing:-0.3px;">Lychee AI</span>
+        </div>
+        <div id="topAvatar" onclick="toggleProfileMenu()" style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;cursor:pointer;transition:opacity 0.15s;user-select:none;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">?</div>
+      </div>
     </div>
 
     <!-- Main content -->
@@ -561,15 +567,12 @@ function navigate(page) {
   const pages = { build: renderBuild, usage: renderUsage, history: renderHistory, billing: renderBilling, settings: renderSettings, admin: renderAdmin };
   pages[page]?.();
   const pn = document.getElementById('topProjectName');
-  if (pn) {
-    if (page === 'build' && currentProjectId) {
-      const proj = getProject(currentProjectId);
-      pn.textContent = proj ? proj.name : '';
-    } else if (page !== 'build') {
-      pn.textContent = page.charAt(0).toUpperCase() + page.slice(1);
-    } else {
-      pn.textContent = '';
-    }
+  const brand = document.getElementById('topBrand');
+  if (page === 'build') {
+    updateTopBarProject();
+  } else {
+    if (pn) pn.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+    if (brand) brand.style.opacity = '0';
   }
 }
 
@@ -617,11 +620,11 @@ async function renderBuild() {
       <!-- Projects sidebar exactly like ref 3 -->
       <div id="projectsSidebar" style="width:190px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg-2);display:flex;flex-direction:column;">
         <div style="padding:12px 10px 10px;">
-          <button onclick="startNewProject()" class="shine-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 11px;border-radius:8px;background:white;border:none;color:#1a1a1a;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
-            <span style="font-size:16px;line-height:1;font-weight:400;">+</span> New Project
+          <button onclick="startNewProject()" class="shine-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:9999px;background:white;border:none;color:#111;font-family:var(--font-sans);font-size:13px;font-weight:500;cursor:pointer;letter-spacing:0.01em;transition:background 0.15s;" onmouseover="this.style.background='#ececec'" onmouseout="this.style.background='white'">
+            <span style="font-size:18px;line-height:1;font-weight:300;margin-top:-1px;">+</span> New Project
           </button>
         </div>
-        <div style="padding:6px 10px 6px;font-size:12px;font-weight:600;color:var(--text-3);letter-spacing:0.02em;">Projects</div>
+        <div style="padding:6px 10px 6px;font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:0.04em;text-transform:uppercase;">Projects</div>
         <div id="projectsList" style="flex:1;overflow-y:auto;padding:0 6px 10px;"></div>
         <!-- Discord footer -->
         <div style="padding:8px;border-top:1px solid var(--border);">
@@ -646,7 +649,7 @@ async function renderBuild() {
 
         <!-- Welcome screen — full area with input in middle -->
         <div id="agentWelcome" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
-          <h1 id="agentTitle" style="font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;opacity:0;transform:translateY(16px);transition:all 0.5s ease;">Describe a <em style="color:var(--accent)">game mechanic...</em></h1>
+          <h1 id="agentTitle" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;opacity:0;transform:translateY(16px);transition:all 0.5s ease;">Describe a <em style="color:var(--accent)">game mechanic...</em></h1>
           <p id="agentSub" style="font-size:14px;color:var(--text-3);margin-bottom:20px;opacity:0;transition:all 0.5s ease 0.15s;">Lychee AI will code it and insert it directly into your Studio</p>
 
           <!-- Input in middle -->
@@ -759,39 +762,70 @@ function renderProjectsList() {
   const el = document.getElementById('projectsList');
   if (!el) return;
   if (!projects.length) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--text-3);padding:8px 6px;">No projects yet</div>`;
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-3);padding:8px 8px;">No projects yet</div>`;
     return;
   }
   const studioIcon = `<img src="./roblox-studio-icon.png" style="width:18px;height:18px;border-radius:4px;flex-shrink:0;object-fit:cover;"/>`;
   el.innerHTML = projects.map(p => `
-    <div onclick="switchProject('${p.id}')" style="display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:6px;cursor:pointer;margin-bottom:1px;background:${currentProjectId===p.id?'rgba(255,255,255,0.08)':'transparent'};transition:background 0.12s;"
-      onmouseover="if('${p.id}'!==currentProjectId)this.style.background='rgba(255,255,255,0.05)'"
-      onmouseout="if('${p.id}'!==currentProjectId)this.style.background='transparent'">
+    <div onclick="switchProject('${p.id}')" style="display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:7px;cursor:pointer;margin-bottom:1px;background:${currentProjectId===p.id?'rgba(255,255,255,0.1)':'transparent'};transition:background 0.12s;position:relative;"
+      onmouseover="this.style.background='${currentProjectId===p.id?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.06)'}';this.querySelector('.proj-dots').style.opacity='1'"
+      onmouseout="this.style.background='${currentProjectId===p.id?'rgba(255,255,255,0.1)':'transparent'}';this.querySelector('.proj-dots').style.opacity='0'">
       ${studioIcon}
-      <span style="flex:1;font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
-      <span onclick="event.stopPropagation();showProjMenu('${p.id}',event)" style="font-size:16px;font-weight:700;color:var(--text-3);padding:2px 4px;border-radius:4px;opacity:0;transition:opacity 0.15s;cursor:pointer;line-height:1;letter-spacing:1px;" class="proj-menu">···</span>
+      <span style="flex:1;font-size:13px;font-weight:500;color:${currentProjectId===p.id?'#ffffff':'rgba(255,255,255,0.75)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
+      <span class="proj-dots" onclick="event.stopPropagation();showProjMenu('${p.id}',event)" style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;color:var(--text-2);opacity:0;transition:opacity 0.15s,background 0.12s;cursor:pointer;font-size:14px;font-weight:700;letter-spacing:1px;flex-shrink:0;"
+        onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">···</span>
     </div>`).join('');
-  el.querySelectorAll('[onclick*="switchProject"]').forEach(row => {
-    const menu = row.querySelector('.proj-menu');
-    row.addEventListener('mouseenter', () => { if(menu) menu.style.opacity='1'; });
-    row.addEventListener('mouseleave', () => { if(menu) menu.style.opacity='0'; });
-  });
 }
 
+// Project context menu
+let projMenuEl = null;
 function showProjMenu(projId, e) {
   e.stopPropagation();
-  // Simple delete for now
-  if (confirm('Delete this project?')) deleteProject(projId);
+  closeProjMenu();
+  const rect = e.target.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.id = 'projCtxMenu';
+  menu.style.cssText = `position:fixed;top:${rect.bottom+4}px;left:${rect.left-130}px;z-index:3000;background:var(--bg-2);border:1px solid var(--border-2);border-radius:10px;padding:5px;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:msg-in 0.15s ease;`;
+  menu.innerHTML = `
+    <div onclick="renameProject('${projId}');closeProjMenu()" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:13px;color:var(--text);cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Rename Project
+    </div>
+    <div onclick="deleteProject('${projId}');closeProjMenu()" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:13px;color:var(--red);cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background='rgba(248,113,113,0.08)'" onmouseout="this.style.background='transparent'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      Delete Project
+    </div>`;
+  document.body.appendChild(menu);
+  projMenuEl = menu;
+  setTimeout(() => document.addEventListener('click', closeProjMenu, {once:true}), 10);
+}
+
+function closeProjMenu() {
+  if (projMenuEl) { projMenuEl.remove(); projMenuEl = null; }
+}
+
+function renameProject(id) {
+  const proj = getProject(id);
+  if (!proj) return;
+  const name = prompt('Rename project:', proj.name);
+  if (name && name.trim()) {
+    proj.name = name.trim();
+    saveProjects();
+    renderProjectsList();
+    if (currentProjectId === id) updateTopBarProject();
+  }
 }
 
 function updateTopBarProject() {
   const pn = document.getElementById('topProjectName');
-  if (!pn) return;
+  const brand = document.getElementById('topBrand');
   if (currentProjectId) {
     const proj = getProject(currentProjectId);
-    pn.textContent = proj ? proj.name : '';
+    if (pn) pn.textContent = proj ? proj.name : '';
+    if (brand) brand.style.opacity = '0';
   } else {
-    pn.textContent = '';
+    if (pn) pn.textContent = '';
+    if (brand) brand.style.opacity = '1';
   }
 }
 
@@ -859,24 +893,91 @@ function hideWelcome(instant) {
   const w = document.getElementById('agentWelcome');
   const msgs = document.getElementById('agentMessages');
   const bar = document.getElementById('agentInputBar');
+  const inputCenter = document.getElementById('agentInputWrapCenter');
   const bg = document.getElementById('buildBg');
   if (!w) return;
-  // Hide background game cards when in chat mode
-  if (bg) { bg.style.transition='opacity 0.4s ease'; bg.style.opacity='0'; setTimeout(()=>{ bg.style.display='none'; },400); }
+
+  // Hide bg cards
+  if (bg) { bg.style.transition='opacity 0.5s ease'; bg.style.opacity='0'; setTimeout(()=>{ bg.style.display='none'; },500); }
+
   if (instant) {
     w.remove();
-    if (msgs) { msgs.style.display='flex'; }
-    if (bar) { bar.style.display='block'; }
+    if (msgs) msgs.style.display='flex';
+    if (bar) bar.style.display='block';
     return;
   }
-  w.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-  w.style.opacity = '0';
-  w.style.transform = 'translateY(-16px)';
+
+  // Get current position of the input box for animation
+  const inputRect = inputCenter ? inputCenter.getBoundingClientRect() : null;
+  const container = w.parentElement;
+  const containerRect = container ? container.getBoundingClientRect() : null;
+
+  // 1. Fade out everything EXCEPT the input box
+  const title = document.getElementById('agentTitle');
+  const sub = document.getElementById('agentSub');
+  const chips = document.getElementById('agentChips');
+  const footer = document.getElementById('centerFooter');
+  [title, sub, chips, footer].forEach(el => {
+    if (el) { el.style.transition='opacity 0.25s ease'; el.style.opacity='0'; }
+  });
+
+  // 2. After fade, animate input sliding to bottom
   setTimeout(() => {
-    if (w.parentNode) w.remove();
-    if (msgs) { msgs.style.display='flex'; }
-    if (bar) { bar.style.display='block'; setTimeout(() => { const di = document.getElementById('agentInputDocked'); if(di) di.focus(); }, 50); }
-  }, 350);
+    if (!w.parentNode) return;
+
+    // Show the docked bar instantly but invisible so we can measure it
+    if (bar) { bar.style.display='block'; bar.style.opacity='0'; }
+    if (msgs) msgs.style.display='flex';
+
+    // Clone the center input box and animate it flying to bottom
+    if (inputCenter && inputRect && containerRect) {
+      const clone = inputCenter.cloneNode(true);
+      clone.style.cssText = `
+        position:fixed;
+        top:${inputRect.top}px;
+        left:${inputRect.left}px;
+        width:${inputRect.width}px;
+        z-index:9999;
+        transition:top 0.45s cubic-bezier(0.4,0,0.2,1),left 0.45s cubic-bezier(0.4,0,0.2,1),width 0.45s cubic-bezier(0.4,0,0.2,1),border-radius 0.45s,opacity 0.2s;
+        pointer-events:none;
+        background:var(--surface);
+        border:1px solid var(--border-2);
+        border-radius:16px;
+        padding:12px 14px;
+        box-shadow:0 8px 40px rgba(0,0,0,0.4);
+        opacity:1;
+      `;
+      document.body.appendChild(clone);
+
+      // Get docked input position
+      const dockedWrap = document.getElementById('agentInputWrapDocked');
+      const dockedRect = dockedWrap ? dockedWrap.getBoundingClientRect() : null;
+
+      requestAnimationFrame(() => {
+        if (dockedRect) {
+          clone.style.top = dockedRect.top + 'px';
+          clone.style.left = dockedRect.left + 'px';
+          clone.style.width = dockedRect.width + 'px';
+          clone.style.borderRadius = '12px';
+        }
+        setTimeout(() => {
+          clone.style.opacity = '0';
+          setTimeout(() => { clone.remove(); }, 200);
+        }, 380);
+      });
+    }
+
+    // Fade in docked bar and messages
+    setTimeout(() => {
+      if (bar) { bar.style.transition='opacity 0.3s ease'; bar.style.opacity='1'; }
+      w.remove();
+      setTimeout(() => {
+        const di = document.getElementById('agentInputDocked');
+        if (di) di.focus();
+      }, 50);
+    }, 300);
+
+  }, 220);
 }
 
 function renderUserMessage(text) {
@@ -899,7 +1000,7 @@ function renderAgentResponse(text, steps) {
       <img src="./lychee-ai-logo.png" style="width:100%;height:100%;object-fit:cover;"/>
     </div>
     <div style="flex:1;max-width:720px;">
-      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:-0.3px;">Lychee AI</div>
+      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:-0.3px;">Lychee</div>
       <div style="font-size:15px;line-height:1.85;color:var(--text);">${text}</div>
       ${steps.length ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:4px;">${steps.map(s=>`
         <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-2);">
@@ -923,7 +1024,7 @@ function addThinkingBubble() {
       <img src="./lychee-ai-logo.png" style="width:100%;height:100%;object-fit:cover;"/>
     </div>
     <div style="flex:1;">
-      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:-0.3px;">Lychee AI</div>
+      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:-0.3px;">Lychee</div>
       <div id="thinkingSteps_${id}" style="display:flex;flex-direction:column;gap:4px;"></div>
     </div>`;
   msgList.appendChild(div);
@@ -1136,7 +1237,7 @@ function spawnGameCards() {
 
 // ── OTHER PAGES ──
 async function renderUsage() {
-  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:var(--font-display);font-size:26px;font-weight:800;">Usage</h1><p style="color:var(--text-2);font-size:14px;margin-top:4px;">Your generation stats</p></div><div id="usageContent" style="color:var(--text-3)">Loading...</div></div>`;
+  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;">Usage</h1><p style="color:var(--text-2);font-size:14px;margin-top:4px;">Your generation stats</p></div><div id="usageContent" style="color:var(--text-3)">Loading...</div></div>`;
   const usage = await api('GET', '/usage');
   if (!usage) return;
   document.getElementById('usageContent').innerHTML = `
@@ -1149,7 +1250,7 @@ async function renderUsage() {
 }
 
 async function renderHistory() {
-  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:var(--font-display);font-size:26px;font-weight:800;">History</h1></div><div id="histContent" class="card table-wrap">Loading...</div></div>`;
+  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;">History</h1></div><div id="histContent" class="card table-wrap">Loading...</div></div>`;
   const result = await api('GET', '/jobs');
   const el = document.getElementById('histContent');
   if (!result?.jobs?.length) { el.innerHTML=`<div style="text-align:center;padding:32px;color:var(--text-3);">No history yet</div>`; return; }
@@ -1157,17 +1258,17 @@ async function renderHistory() {
 }
 
 async function renderBilling() {
-  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:var(--font-display);font-size:26px;font-weight:800;">Billing</h1></div>
+  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;">Billing</h1></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
-      <div class="card"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;">Free</div><div style="font-family:var(--font-display);font-size:36px;font-weight:800;">$0</div><div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">forever</div><button class="btn btn-ghost btn-block" disabled>Current</button></div>
-      <div class="card" style="border-color:var(--accent);"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;">Pro</div><div style="font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--accent);">$19</div><div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">/month</div><button class="btn btn-primary btn-block" onclick="checkout('pro')">Upgrade</button></div>
-      <div class="card"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;">Team</div><div style="font-family:var(--font-display);font-size:36px;font-weight:800;">$49</div><div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">/month</div><button class="btn btn-ghost btn-block" onclick="checkout('team')">Upgrade</button></div>
+      <div class="card"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;">Free</div><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:800;">$0</div><div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">forever</div><button class="btn btn-ghost btn-block" disabled>Current</button></div>
+      <div class="card" style="border-color:var(--accent);"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;">Pro</div><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:800;color:var(--accent);">$19</div><div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">/month</div><button class="btn btn-primary btn-block" onclick="checkout('pro')">Upgrade</button></div>
+      <div class="card"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:6px;">Team</div><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:800;">$49</div><div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">/month</div><button class="btn btn-ghost btn-block" onclick="checkout('team')">Upgrade</button></div>
     </div></div>`;
 }
 async function checkout(p) { const r = await api('POST', '/billing/create-checkout', {planName:p}); if (r?.url) window.open(r.url,'_blank'); else toast('Checkout unavailable','error'); }
 
 async function renderSettings() {
-  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:700px;"><div style="margin-bottom:24px;"><h1 style="font-family:var(--font-display);font-size:26px;font-weight:800;">Settings</h1></div>
+  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:700px;"><div style="margin-bottom:24px;"><h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;">Settings</h1></div>
     <div class="card"><h3 style="font-weight:700;margin-bottom:16px;">Profile</h3>
       <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" value="${state.user?.email||''}" disabled style="opacity:0.5"/></div>
       <div class="form-group"><label class="form-label">Display name</label><input class="form-input" type="text" id="displayName" value="${state.user?.display_name||''}" placeholder="Your name"/></div>
@@ -1182,7 +1283,7 @@ async function saveProfile() {
 }
 
 async function renderAdmin() {
-  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:var(--font-display);font-size:26px;font-weight:800;">Admin Panel</h1></div>
+  document.getElementById('mainContent').innerHTML = `<div style="padding:32px;max-width:900px;"><div style="margin-bottom:24px;"><h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;">Admin Panel</h1></div>
     <div class="stats-grid"><div class="stat-card"><div class="stat-label">Users</div><div class="stat-value" id="aU">—</div></div><div class="stat-card"><div class="stat-label">New 30d</div><div class="stat-value" id="aN">—</div></div><div class="stat-card"><div class="stat-label">MRR</div><div class="stat-value" id="aM">—</div></div><div class="stat-card"><div class="stat-label">Requests</div><div class="stat-value" id="aR">—</div></div></div>
     <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><h3>Users</h3><input class="form-input" style="width:200px;" placeholder="Search..." oninput="searchAdminUsers(this.value)"/></div><div id="usersTable">Loading...</div></div></div>`;
   const stats = await api('GET', '/admin/stats');
