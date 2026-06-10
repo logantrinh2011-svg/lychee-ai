@@ -306,9 +306,17 @@ router.post('/jobs/:id/hold', requireAuth, async (req: any, res) => {
   res.json({ ok: true });
 });
 
-// Release job — user approved, let plugin pick it up
+// Release job — user approved, let plugin pick up parent + all child jobs
 router.post('/jobs/:id/release', requireAuth, async (req: any, res) => {
+  // Release parent
   await db.query(`UPDATE code_jobs SET status='completed' WHERE id=$1 AND user_id=$2`, [req.params.id, req.user!.sub]);
+  // Release child jobs (same prompt, have code, awaiting approval)
+  await db.query(
+    `UPDATE code_jobs SET status='completed'
+     WHERE user_id=$1 AND status='awaiting_approval' AND generated_code IS NOT NULL
+     AND prompt = (SELECT prompt FROM code_jobs WHERE id=$2)`,
+    [req.user!.sub, req.params.id]
+  );
   res.json({ ok: true });
 });
 
